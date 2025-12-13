@@ -1,40 +1,131 @@
-﻿import http.server
-import socketserver
+﻿# ==============================================================================
+# IMPORTS - All required modules at the top
+# ==============================================================================
 import json
-import socket
 import os
 import sys
-import threading
 import time
+import http.server
+import socketserver
+import socket
+import threading
 import requests
+
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # python-dotenv not available, use environment variables only
+
+# Optional import for webbrowser (may not be available on all systems)
+try:
+    import webbrowser
+except ImportError:
+    webbrowser = None
+    print("[WARNING] webbrowser module not available. Browser will not open automatically.")
+
 
 # ==============================================================================
 # 🔑 GÜVENLİK BÖLÜMÜ (BULLETPROOF KEY LOADING)
 # ==============================================================================
-RAW_KEY = "sk-ant-api03-tJhQHJe5qFk2oi5f2RkoJRikkcNEjOWj6S9tPYgvF26f87LcCCcIJAX-Sz_1kFpKBJkya5M9u"
+def load_env_var(key, default=None):
+    """Load environment variable with encoding cleanup."""
+    value = os.getenv(key) or default
+    if value:
+        # Remove BOM and leading/trailing whitespace
+        value = value.lstrip('\ufeff').strip()
+    return value
 
 def get_clean_key():
     """
     Anahtarı atomlarına ayırıp görünmez karakterlerden (BOM, Zero-width space) temizler.
+    Production-ready encoding fix for Windows/Linux/K8s environments.
     """
-    k = RAW_KEY
-    # 1. Standart boşlukları sil
+    # Priority: .env file -> ANTHROPIC_API_KEY -> SERAPH_LLM_KEY -> fallback
+    raw_key = load_env_var("ANTHROPIC_API_KEY") or load_env_var("SERAPH_LLM_KEY")
+    
+    if not raw_key:
+        return None
+    
+    # 1. Remove BOM character first (Windows encoding issue)
+    k = raw_key.lstrip('\ufeff')
+    # 2. Strip all leading/trailing whitespace
     k = k.strip()
-    # 2. Windows BOM karakterini sil (\ufeff)
-    k = k.replace('\ufeff', '')
-    # 3. Görünmez boşlukları sil
-    k = k.replace('\u200b', '')
-    # 4. Tırnak işaretlerini sil (varsa)
-    k = k.replace('"', '').replace("'", "")
-    return k
+    # 3. Remove invisible zero-width spaces
+    k = k.replace('\u200b', '').replace('\u200c', '').replace('\u200d', '')
+    # 4. Remove quotes if present (common .env mistake)
+    k = k.strip('"').strip("'")
+    # 5. Final strip to ensure clean key
+    k = k.strip()
+    
+    return k if k else None
 
 API_KEY = get_clean_key()
+if not API_KEY:
+    print("[WARNING] ANTHROPIC_API_KEY not found. Set it in .env or environment variables.")
 # ==============================================================================
 
-PORT = 8000
-REDIS_HOST = '127.0.0.1'
-REDIS_PORT = 16379
-REDIS_PASS = 'voltran2024'
+# Load configuration from environment variables (with .env support)
+# Bug fix: Safe integer conversion with error handling
+def safe_int_env(key, default):
+    """Safely convert environment variable to integer with fallback to default."""
+    try:
+        value = os.getenv(key, str(default))
+        return int(value)
+    except (ValueError, TypeError):
+        print(f"[WARNING] Invalid value for {key}, using default: {default}")
+        return int(default)
+
+PORT = safe_int_env("PORT", 8000)
+REDIS_HOST = os.getenv("REDIS_HOST", "127.0.0.1")
+REDIS_PORT = safe_int_env("REDIS_PORT", 16379)
+REDIS_PASS = os.getenv("REDIS_PASS", "voltran2024")
+
+# Check if port is available, try alternative ports if needed
+def find_available_port(start_port=8000, max_attempts=10):
+    """
+    Find an available port starting from start_port.
+    Bug fix: Uses server binding instead of client connection to properly verify port availability.
+    This correctly handles ports in TIME_WAIT state and other edge cases.
+    """
+    for i in range(max_attempts):
+        port = start_port + i
+        test_socket = None
+        try:
+            # Attempt to bind as a server to verify port availability
+            # This is the correct way to check if a port can be used for server binding
+            test_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            test_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            test_socket.bind(('', port))  # Bind to all interfaces
+            test_socket.close()
+            # If bind succeeded, port is available
+            return port
+        except OSError:
+            # Port is in use or unavailable (TIME_WAIT, already bound, etc.)
+            if test_socket:
+                try:
+                    test_socket.close()
+                except:
+                    pass
+            continue
+        except Exception:
+            # Other errors, try next port
+            if test_socket:
+                try:
+                    test_socket.close()
+                except:
+                    pass
+            continue
+    return start_port  # Fallback to original port
+
+# Try to find available port
+try:
+    PORT = find_available_port(PORT)
+    if PORT != 8000:
+        print(f"[INFO] Port 8000 is in use, using port {PORT} instead")
+except:
+    pass  # Use default port if check fails
 
 # --- REDIS CLIENT ---
 def redis_cmd(cmd):
@@ -70,57 +161,89 @@ def get_system_state():
 
 # --- SERAPH BRAIN (EVOLVED) ---
 def ask_seraph(user_input):
-    state = get_system_state()
-    context = f"PRICE: ${state['price']} | STRATEGY: {state['strategy']}"
-    
-    headers = {
-        "x-api-key": API_KEY,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json"
-    }
-    
-    # SYSTEM PROMPT (MASTER CONTROL)
-    sys_msg = """You are SERAPH, the Autonomous Core of GODBRAIN.
-    You have DIRECT WRITE ACCESS to the trading engine.
-    
-    Current Context:
-    """ + context + """
-    
-    INSTRUCTIONS:
-    1. If user asks for analysis, provide brief technical insight.
-    2. If user commands a strategy change (e.g., "Activate Sniper"), output JSON:
-       {"actions": [{"cmd": "SET", "key": "godbrain:model:linear", "value": "{\"version\": \"SERAPH-SNIPER\", \"threshold\": 0.98}"}]}
-    3. If panic requested, output JSON to stop system.
-    """
-    
-    data = {
-        "model": "claude-3-5-sonnet-20240620",
-        "max_tokens": 512,
-        "system": sys_msg,
-        "messages": [{"role": "user", "content": user_input}]
-    }
-    
     try:
+        state = get_system_state()
+        context = f"PRICE: ${state['price']} | STRATEGY: {state['strategy']}"
+        
+        headers = {
+            "x-api-key": API_KEY,
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json"
+        }
+        
+        
+        # SYSTEM PROMPT (MASTER CONTROL)
+        sys_msg = """You are SERAPH, the Autonomous Core of GODBRAIN.
+        You have DIRECT WRITE ACCESS to the trading engine.
+        
+        Current Context:
+        """ + context + """
+        
+        INSTRUCTIONS:
+        1. If user asks for analysis, provide brief technical insight.
+        2. If user commands a strategy change (e.g., "Activate Sniper"), output JSON:
+           {"actions": [{"cmd": "SET", "key": "godbrain:model:linear", "value": "{\"version\": \"SERAPH-SNIPER\", \"threshold\": 0.98}"}]}
+        3. If panic requested, output JSON to stop system.
+        """
+        
+        # Use environment variable for model, or fallback to latest Claude Sonnet 4.5
+        # Updated model name: claude-3-5-sonnet models are deprecated, using claude-sonnet-4-5
+        model_name = os.getenv("SERAPH_MODEL") or os.getenv("SERAPH_LLM_MODEL") or "claude-sonnet-4-5-20250929"
+        
+        data = {
+            "model": model_name,
+            "max_tokens": 512,
+            "system": sys_msg,
+            "messages": [{"role": "user", "content": user_input}]
+        }
+        
         r = requests.post("https://api.anthropic.com/v1/messages", headers=headers, json=data, timeout=15)
         
         if r.status_code == 200:
             content = r.json()['content'][0]['text']
             
-            # --- CEREBRO: ACTION EXECUTOR ---
+            # --- CEREBRO: ACTION EXECUTOR (Level 5 Command Execution) ---
             if '{"actions":' in content:
                 try:
-                    # Basit JSON ayıklama
-                    json_part = content[content.find('{'):content.rfind('}')+1]
+                    # Extract JSON from response (handle markdown code blocks)
+                    json_start = content.find('{"actions":')
+                    if json_start == -1:
+                        json_start = content.find('{')
+                    json_end = content.rfind('}') + 1
+                    json_part = content[json_start:json_end]
                     cmd_data = json.loads(json_part)
                     actions = cmd_data.get('actions', [])
                     
                     logs = []
                     for action in actions:
-                        if action['cmd'] == 'SET':
-                            res = redis_cmd(f"SET {action['key']} '{action['value']}'")
-                            logs.append(f"EXEC: {action['key']} -> OK")
+                        cmd = action.get('cmd', '').upper()
+                        key = action.get('key', '')
+                        value = action.get('value', '')
+                        
+                        if cmd == 'SET':
+                            # Escape single quotes in value for Redis
+                            escaped_value = value.replace("'", "\\'")
+                            res = redis_cmd(f"SET {key} '{escaped_value}'")
+                            if res and ('+OK' in res or 'OK' in res):
+                                logs.append(f"EXEC: SET {key} -> OK")
+                            else:
+                                logs.append(f"EXEC: SET {key} -> FAILED: {res}")
+                        
+                        elif cmd == 'PUBLISH':
+                            # Redis PUBLISH command for pub/sub
+                            channel = action.get('channel', key)
+                            res = redis_cmd(f"PUBLISH {channel} '{value}'")
+                            if res and res.isdigit():
+                                logs.append(f"EXEC: PUBLISH {channel} -> {res} subscribers")
+                            else:
+                                logs.append(f"EXEC: PUBLISH {channel} -> FAILED: {res}")
+                        
+                        else:
+                            logs.append(f"EXEC: Unknown command '{cmd}' -> SKIPPED")
                     
                     return f"{content}\n\n[SYSTEM LOG]: {', '.join(logs)}"
+                except json.JSONDecodeError as e:
+                    return f"{content}\n\n[EXEC ERROR]: JSON parse failed - {e}"
                 except Exception as e:
                     return f"{content}\n\n[EXEC ERROR]: {e}"
             
@@ -135,29 +258,228 @@ class ThreadedHTTPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     daemon_threads = True
 
 class RequestHandler(http.server.SimpleHTTPRequestHandler):
+    def end_headers(self):
+        """Add CORS headers to all responses."""
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type, Accept')
+        super().end_headers()
+    
+    def do_OPTIONS(self):
+        """Handle CORS preflight requests."""
+        self.send_response(200)
+        self.end_headers()
+    
     def do_GET(self):
-        if self.path == '/':
+        if self.path == '/favicon.ico':
+            # Return empty favicon to avoid 404 errors
+            self.send_response(204)
+            self.end_headers()
+            return
+        elif self.path == '/':
+            # Serve admin panel
             self.send_response(200)
             self.send_header('Content-type', 'text/html')
             self.end_headers()
-            html = """
+            try:
+                # Try multiple paths for admin panel (Docker container paths)
+                current_dir = os.path.dirname(os.path.abspath(__file__))
+                admin_panel_paths = [
+                    os.path.join(current_dir, 'admin_panel.html'),
+                    os.path.join(os.getcwd(), 'core', 'admin_panel.html'),
+                    '/app/core/admin_panel.html',
+                    'core/admin_panel.html',
+                    os.path.join(os.path.dirname(__file__), 'admin_panel.html')
+                ]
+                html = None
+                for path in admin_panel_paths:
+                    try:
+                        if os.path.exists(path):
+                            with open(path, 'r', encoding='utf-8') as f:
+                                html = f.read()
+                            break
+                    except Exception as e:
+                        continue
+                if not html:
+                    raise FileNotFoundError("Admin panel not found in any path")
+            except Exception as e:
+                # Fallback to simple dashboard if admin panel not found
+                html = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>GODBRAIN QUANTUM</title>
     <style>
-        body { background: #000; color: #0f0; font-family: 'Courier New', monospace; display: flex; height: 100vh; margin:0; overflow:hidden; }
-        .sidebar { width: 300px; padding: 20px; border-right: 1px solid #333; background: #050505; }
-        .metric { font-size: 24px; font-weight: bold; color: #fff; margin-bottom: 20px; }
-        .main { flex: 1; display: flex; flex-direction: column; }
-        .chat-box { flex: 1; padding: 20px; overflow-y: auto; display:flex; flex-direction:column; gap:10px; }
-        .msg { padding:10px; border-radius:4px; max-width:85%; line-height: 1.4; }
-        .msg.user { align-self:flex-end; background:#222; color:#ccc; border: 1px solid #444; }
-        .msg.ai { align-self:flex-start; background:#001100; color:#0f0; border: 1px solid #004400; }
-        .input-area { padding: 20px; border-top: 1px solid #333; background: #050505; }
-        input { width: 100%; background: #000; border: 1px solid #333; color: #fff; padding: 12px; font-family: inherit; font-size: 16px; outline: none; }
-        input:focus { border-color: #0f0; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%); 
+            color: #e0e0e0; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            display: flex; 
+            height: 100vh; 
+            margin: 0; 
+            overflow: hidden; 
+        }
+        .sidebar { 
+            width: 320px; 
+            padding: 24px; 
+            border-right: 2px solid #2a2a3e; 
+            background: linear-gradient(180deg, #0f0f1e 0%, #1a1a2e 100%);
+            box-shadow: 2px 0 10px rgba(0,255,0,0.1);
+        }
+        .sidebar h2 { 
+            color: #00ff88; 
+            font-size: 28px; 
+            margin-bottom: 8px; 
+            text-shadow: 0 0 10px rgba(0,255,136,0.5);
+        }
+        .sidebar h2 span { 
+            font-size: 14px; 
+            color: #00cc6a; 
+        }
+        .metric-label { 
+            color: #888; 
+            font-size: 12px; 
+            text-transform: uppercase; 
+            letter-spacing: 1px; 
+            margin-top: 24px; 
+            margin-bottom: 8px; 
+        }
+        .metric { 
+            font-size: 32px; 
+            font-weight: 700; 
+            color: #fff; 
+            margin-bottom: 24px; 
+            text-shadow: 0 0 8px rgba(255,255,255,0.3);
+        }
+        .status { 
+            font-size: 12px; 
+            color: #666; 
+            margin-top: 24px; 
+            line-height: 1.8; 
+        }
+        .status-item { 
+            color: #00ff88; 
+            margin-bottom: 4px; 
+        }
+        .main { 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            background: #0a0a0a;
+        }
+        .chat-box { 
+            flex: 1; 
+            padding: 24px; 
+            overflow-y: auto; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 16px; 
+            background: #0a0a0a;
+        }
+        .chat-box::-webkit-scrollbar { width: 8px; }
+        .chat-box::-webkit-scrollbar-track { background: #1a1a1a; }
+        .chat-box::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        .chat-box::-webkit-scrollbar-thumb:hover { background: #444; }
+        .msg { 
+            padding: 16px 20px; 
+            border-radius: 12px; 
+            max-width: 75%; 
+            line-height: 1.6; 
+            word-wrap: break-word;
+            animation: fadeIn 0.3s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .msg.user { 
+            align-self: flex-end; 
+            background: linear-gradient(135deg, #1e3a5f 0%, #2a4a6f 100%); 
+            color: #e0f0ff; 
+            border: 1px solid #3a5a7f; 
+            box-shadow: 0 2px 8px rgba(30,58,95,0.3);
+        }
+        .msg.ai { 
+            align-self: flex-start; 
+            background: linear-gradient(135deg, #0a2a1a 0%, #1a3a2a 100%); 
+            color: #a0ffc0; 
+            border: 1px solid #2a5a3a; 
+            box-shadow: 0 2px 8px rgba(0,255,136,0.2);
+        }
+        .msg.error {
+            align-self: flex-start;
+            background: linear-gradient(135deg, #3a1a1a 0%, #5a2a2a 100%);
+            color: #ffaaaa;
+            border: 1px solid #7a3a3a;
+        }
+        .input-area { 
+            padding: 20px 24px; 
+            border-top: 2px solid #2a2a3e; 
+            background: linear-gradient(180deg, #0f0f1e 0%, #1a1a2e 100%);
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+        }
+        .input-wrapper {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        input { 
+            flex: 1;
+            background: #1a1a2e; 
+            border: 2px solid #3a3a4e; 
+            color: #e0e0e0; 
+            padding: 14px 18px; 
+            font-family: inherit; 
+            font-size: 15px; 
+            outline: none; 
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        input:focus { 
+            border-color: #00ff88; 
+            box-shadow: 0 0 12px rgba(0,255,136,0.3);
+            background: #1f1f3e;
+        }
+        input::placeholder {
+            color: #666;
+        }
+        button {
+            background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+            border: none;
+            color: #000;
+            padding: 14px 28px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,255,136,0.3);
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,255,136,0.5);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .loading {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid #00ff88;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -179,40 +501,131 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
             <div class="msg ai">SYSTEM: Seraph initialized. Connected to Cloud Brain.</div>
         </div>
         <div class="input-area">
-            <form onsubmit="event.preventDefault(); send()">
-                <input type="text" id="cmd" placeholder="Enter command..." autocomplete="off">
-            </form>
+            <div class="input-wrapper">
+                <input type="text" id="cmd" placeholder="Komut girin (ör: leverage kaç, analiz yap)..." autocomplete="off">
+                <button type="button" id="sendBtn">Gönder</button>
+            </div>
         </div>
     </div>
     <script>
-        setInterval(() => {
-            fetch('/api/data').then(r=>r.json()).then(d=>{
-                document.getElementById('price').innerText = '$' + d.price.toLocaleString();
-                let strat = JSON.parse(d.strategy || '{}');
-                document.getElementById('mode').innerText = strat.version || 'OFFLINE';
-            });
-        }, 1000);
-
-        async function send() {
-            let i = document.getElementById('cmd');
-            let c = document.getElementById('chat');
-            let txt = i.value; 
-            if(!txt) return;
-            i.value = '';
-            c.innerHTML += `<div class="msg user">${txt}</div>`;
-            c.scrollTop = c.scrollHeight;
-            try {
-                let r = await fetch('/api/chat', {method:'POST', body:JSON.stringify({command:txt})});
-                let d = await r.json();
-                // Format JSON nicely in chat
-                let resp = d.response.replace(/\n/g, '<br>');
-                c.innerHTML += `<div class="msg ai">${resp}</div>`;
-            } catch(e) {
-                c.innerHTML += `<div class="msg ai" style="color:red">CONNECTION LOST</div>`;
+        (function() {
+            'use strict';
+            
+            let isSending = false;
+            
+            // Update market data
+            setInterval(() => {
+                fetch('/api/data').then(r=>r.json()).then(d=>{
+                    document.getElementById('price').innerText = '$' + d.price.toLocaleString();
+                    let strat = JSON.parse(d.strategy || '{}');
+                    document.getElementById('mode').innerText = strat.version || 'OFFLINE';
+                }).catch(e => console.error('Data fetch error:', e));
+            }, 1000);
+            
+            // Send function
+            async function sendMessage() {
+                if (isSending) {
+                    return;
+                }
+                
+                let inputEl = document.getElementById('cmd');
+                let chatEl = document.getElementById('chat');
+                let btnEl = document.getElementById('sendBtn');
+                
+                if (!inputEl || !chatEl || !btnEl) {
+                    return;
+                }
+                
+                let txt = inputEl.value.trim();
+                
+                if (!txt) {
+                    inputEl.focus();
+                    return;
+                }
+                
+                isSending = true;
+                btnEl.disabled = true;
+                btnEl.innerHTML = '<span class="loading"></span>';
+                
+                // Show user message
+                inputEl.value = '';
+                chatEl.innerHTML += `<div class="msg user">${txt}</div>`;
+                chatEl.scrollTop = chatEl.scrollHeight;
+                
+                try {
+                    let response = await fetch('/api/chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({command: txt})
+                    });
+                    
+                    if (!response.ok) {
+                        let errorText = await response.text();
+                        throw new Error(`HTTP ${response.status}: ${errorText || response.statusText}`);
+                    }
+                    
+                    let data = await response.json();
+                    
+                    if (data.error) {
+                        chatEl.innerHTML += `<div class="msg error">HATA: ${data.error}</div>`;
+                    } else {
+                        let resp = (data.response || '').replace(/\\n/g, '<br>').replace(/\\r/g, '');
+                        let newlineRegex = new RegExp('\\n', 'g');
+                        resp = resp.replace(newlineRegex, '<br>');
+                        chatEl.innerHTML += `<div class="msg ai">${resp || 'Yanıt alınamadı'}</div>`;
+                    }
+                } catch(error) {
+                    chatEl.innerHTML += `<div class="msg error">HATA: ${error.message || 'Bağlantı hatası'}</div>`;
+                } finally {
+                    isSending = false;
+                    btnEl.disabled = false;
+                    btnEl.innerHTML = 'Gönder';
+                    chatEl.scrollTop = chatEl.scrollHeight;
+                    inputEl.focus();
+                }
             }
-            c.scrollTop = c.scrollHeight;
-        }
-        document.getElementById('cmd').focus();
+            
+            // Initialize when DOM is ready
+            function init() {
+                let cmdInput = document.getElementById('cmd');
+                let sendBtn = document.getElementById('sendBtn');
+                
+                if (!cmdInput || !sendBtn) {
+                    setTimeout(init, 100);
+                    return;
+                }
+                
+                // Enter key
+                cmdInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        sendMessage();
+                    }
+                });
+                
+                // Button click
+                sendBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    sendMessage();
+                });
+                
+                // Make globally available
+                window.sendMessage = sendMessage;
+                window.send = sendMessage; // Alias for compatibility
+                
+                cmdInput.focus();
+            }
+            
+            // Start initialization
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+        })();
     </script>
 </body>
 </html>
@@ -222,20 +635,160 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
             self.send_response(200)
             self.end_headers()
             self.wfile.write(json.dumps(get_system_state()).encode())
+        elif self.path == '/api/system-status':
+            # Comprehensive system status
+            status = {
+                "redis": {"connected": redis_cmd("PING") is not None, "host": REDIS_HOST, "port": REDIS_PORT},
+                "seraph": {"online": API_KEY is not None, "model": os.getenv("SERAPH_MODEL", "claude-sonnet-4-5-20250929")},
+                "market_feed": {"status": "unknown"},  # Can be enhanced
+                "synthia": {"status": "unknown"},  # Can be enhanced
+                "uptime": time.time()  # Server start time
+            }
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps(status).encode())
+        elif self.path == '/api/synthia-status':
+            # Check Synthia core status
+            try:
+                # Try to read synthia process or check Redis for synthia data
+                synthia_status = {
+                    "core_active": False,
+                    "tunnel_health": redis_cmd("PING") is not None,
+                    "last_heartbeat": None,
+                    "current_mode": "UNKNOWN"
+                }
+                # Check if synthia is running (basic check)
+                model_data = redis_cmd("GET godbrain:model:linear")
+                if model_data and '{' in model_data:
+                    try:
+                        model_json = json.loads(model_data[model_data.find('{'):model_data.rfind('}')+1])
+                        synthia_status["current_mode"] = model_json.get("version", "UNKNOWN")
+                        synthia_status["core_active"] = True
+                    except:
+                        pass
+            except:
+                synthia_status = {"error": "Status check failed"}
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps(synthia_status).encode())
 
     def do_POST(self):
         if self.path == '/api/chat':
-            l = int(self.headers['Content-Length'])
-            d = json.loads(self.rfile.read(l))
-            reply = ask_seraph(d.get('command', ''))
-            self.send_response(200)
+            try:
+                content_length = int(self.headers.get('Content-Length', 0))
+                if content_length == 0:
+                    self.send_response(400)
+                    self.send_header('Content-type', 'application/json')
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"error": "Empty request body"}).encode())
+                    return
+                
+                raw_data = self.rfile.read(content_length)
+                d = json.loads(raw_data.decode('utf-8'))
+                command = d.get('command', '')
+                reply = ask_seraph(command)
+                self.send_response(200)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({"response": reply}).encode())
+            except json.JSONDecodeError as e:
+                self.send_response(400)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": f"Invalid JSON: {e}"}).encode())
+            except Exception as e:
+                self.send_response(500)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": f"Server error: {e}"}).encode())
+        else:
+            self.send_response(404)
             self.end_headers()
-            self.wfile.write(json.dumps({"response": reply}).encode())
 
-print(f">> GODBRAIN SERVER ON PORT {PORT}")
-def open_browser():
+# Try to find available port before starting server
+try:
+    PORT = find_available_port(PORT)
+    if PORT != 8000:
+        print(f"[INFO] Port 8000 is in use, using port {PORT} instead")
+except:
+    pass  # Use default port if check fails
+
+# Wrap main execution in try-except to catch any NameError or other exceptions
+try:
+    print(f">> GODBRAIN SERVER ON PORT {PORT}")
+except NameError as e:
+    print(f"[ERROR] NameError: {e}")
+    print("[ERROR] PORT variable is not defined. This should not happen.")
+    sys.exit(1)
+except Exception as e:
+    print(f"[ERROR] Unexpected error during startup: {e}")
+    import traceback
+    traceback.print_exc()
+    sys.exit(1)
+
+def open_browser(port):
+    """Open browser with the specified port."""
     time.sleep(2)
-    webbrowser.open(f'http://localhost:{PORT}')
-threading.Thread(target=open_browser).start()
-with ThreadedHTTPServer(("", PORT), RequestHandler) as httpd:
-    httpd.serve_forever()
+    try:
+        if webbrowser is not None:
+            webbrowser.open(f'http://localhost:{port}')
+        else:
+            print(f"[INFO] Browser not opened automatically. Please open manually: http://localhost:{port}")
+    except Exception as e:
+        print(f"[WARNING] Could not open browser automatically: {e}")
+        print(f"[INFO] Please open manually: http://localhost:{port}")
+
+# Main execution - wrap in try-except to catch any NameError or other exceptions
+try:
+    # Start browser in background thread
+    if webbrowser is not None:
+        try:
+            browser_thread = threading.Thread(target=open_browser, args=(PORT,), daemon=True)
+            browser_thread.start()
+        except NameError as e:
+            print(f"[ERROR] NameError in browser thread: {e}")
+            print(f"[INFO] Please open manually: http://localhost:{PORT}")
+        except Exception as e:
+            print(f"[WARNING] Could not start browser thread: {e}")
+            print(f"[INFO] Please open manually: http://localhost:{PORT}")
+    else:
+        print(f"[INFO] Browser will not open automatically. Please open manually: http://localhost:{PORT}")
+
+    # Start HTTP server
+    try:
+        with ThreadedHTTPServer(("", PORT), RequestHandler) as httpd:
+            print(f"[SUCCESS] HTTP server started on port {PORT}")
+            print(f"[INFO] Server is ready. Open http://localhost:{PORT} in your browser")
+            httpd.serve_forever()
+    except OSError as e:
+        if "10048" in str(e) or "address already in use" in str(e).lower():
+            # Port is in use, try to find another port
+            print(f"[WARNING] Port {PORT} is already in use. Trying alternative port...")
+            PORT = find_available_port(PORT + 1)
+            try:
+                with ThreadedHTTPServer(("", PORT), RequestHandler) as httpd:
+                    print(f"[SUCCESS] HTTP server started on port {PORT}")
+                    print(f"[INFO] Server is ready. Open http://localhost:{PORT} in your browser")
+                    httpd.serve_forever()
+            except Exception as e2:
+                print(f"[ERROR] Could not start HTTP server on any port: {e2}")
+                import traceback
+                traceback.print_exc()
+                sys.exit(1)
+        else:
+            print(f"[ERROR] Could not start HTTP server: {e}")
+            import traceback
+            traceback.print_exc()
+            sys.exit(1)
+    except Exception as e:
+        print(f"[ERROR] Could not start HTTP server: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+except NameError as e:
+    print(f"[ERROR] Could not start HTTP server: {e}")
+    import traceback
+    traceback.print_exc()
+    sys.exit(1)
