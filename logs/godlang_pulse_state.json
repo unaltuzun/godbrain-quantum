@@ -1,12 +1,12 @@
 {
-  "pulse_id": "PULSE-000002",
-  "timestamp": "2025-12-13T11:46:09.147887",
+  "pulse_id": "PULSE-000099",
+  "timestamp": "2025-12-13T23:10:22.910176",
   "chronos": {
     "mode": "STANDARD_FLOW",
-    "coherence": 0.6448,
-    "micro": 0.68,
-    "sim": 0.55,
-    "entropy": "ATMOSPHERIC_NOISE"
+    "coherence": 0.5,
+    "micro": 0.5,
+    "sim": 0.5,
+    "entropy": "DEFAULT"
   },
   "regime": "NEUTRAL",
   "regime_confidence": 0.5,

@@ -35,6 +35,9 @@ def load_env_var(key, default=None):
     if value:
         # Remove BOM and leading/trailing whitespace
         value = value.lstrip('\ufeff').strip()
+        # Return None if completely stripped (empty string), not "" to maintain "not set" semantics
+        if not value:
+            return None
     return value
 
 def get_clean_key():
@@ -119,14 +122,6 @@ def find_available_port(start_port=8000, max_attempts=10):
             continue
     return start_port  # Fallback to original port
 
-# Try to find available port
-try:
-    PORT = find_available_port(PORT)
-    if PORT != 8000:
-        print(f"[INFO] Port 8000 is in use, using port {PORT} instead")
-except:
-    pass  # Use default port if check fails
-
 # --- REDIS CLIENT ---
 def redis_cmd(cmd):
     try:
@@ -134,12 +129,18 @@ def redis_cmd(cmd):
         s.settimeout(0.5)
         s.connect((REDIS_HOST, REDIS_PORT))
         s.sendall(f'AUTH {REDIS_PASS}\r\n'.encode())
-        s.recv(1024)
+        auth_resp = s.recv(1024).decode('utf-8', errors='ignore')
+        # Check if auth was successful
+        if '+OK' not in auth_resp and 'OK' not in auth_resp:
+            s.close()
+            return None
         s.sendall(f"{cmd}\r\n".encode())
         resp = s.recv(4096).decode('utf-8', errors='ignore')
         s.close()
         return resp.strip()
-    except:
+    except Exception as e:
+        # Debug: Log Redis connection errors
+        print(f"[DEBUG] Redis connection error: {e}, HOST={REDIS_HOST}, PORT={REDIS_PORT}")
         return None
 
 def get_system_state():
@@ -220,19 +221,53 @@ def ask_seraph(user_input):
                         key = action.get('key', '')
                         value = action.get('value', '')
                         
+                        # Bug fix: Sanitize ALL parameters (key, channel, value) to prevent Redis injection
+                        # Redis inline protocol doesn't support backslash escaping, so we strip dangerous chars
+                        def sanitize_redis_param(param):
+                            """Remove dangerous characters that could enable Redis command injection."""
+                            if not param:
+                                return ''
+                            # Remove newlines, carriage returns, and other control characters
+                            # Bug fix: Replace \r\n FIRST, then single characters, to handle Windows line endings correctly
+                            sanitized = param.replace("\r\n", "").replace("\n", "").replace("\r", "")
+                            # Remove single quotes (Redis inline protocol doesn't support escaping)
+                            # Using double quotes instead for values containing spaces/special chars
+                            sanitized = sanitized.replace("'", "").replace('"', '')
+                            # Remove backslashes (not used for escaping in inline protocol)
+                            sanitized = sanitized.replace("\\", "")
+                            # Remove other potentially dangerous characters
+                            sanitized = sanitized.replace(";", "").replace("&", "").replace("|", "")
+                            return sanitized.strip()
+                        
                         if cmd == 'SET':
-                            # Escape single quotes in value for Redis
-                            escaped_value = value.replace("'", "\\'")
-                            res = redis_cmd(f"SET {key} '{escaped_value}'")
+                            # Sanitize both key and value
+                            safe_key = sanitize_redis_param(key)
+                            safe_value = sanitize_redis_param(value)
+                            
+                            if not safe_key:
+                                logs.append(f"EXEC: SET -> SKIPPED (empty key)")
+                                continue
+                            
+                            # Use double quotes for values to avoid single quote issues
+                            # Redis inline protocol accepts both single and double quotes
+                            res = redis_cmd(f'SET {safe_key} "{safe_value}"')
                             if res and ('+OK' in res or 'OK' in res):
-                                logs.append(f"EXEC: SET {key} -> OK")
+                                logs.append(f"EXEC: SET {safe_key} -> OK")
                             else:
-                                logs.append(f"EXEC: SET {key} -> FAILED: {res}")
+                                logs.append(f"EXEC: SET {safe_key} -> FAILED: {res}")
                         
                         elif cmd == 'PUBLISH':
-                            # Redis PUBLISH command for pub/sub
+                            # Sanitize channel and value
                             channel = action.get('channel', key)
-                            res = redis_cmd(f"PUBLISH {channel} '{value}'")
+                            safe_channel = sanitize_redis_param(channel)
+                            safe_value = sanitize_redis_param(value)
+                            
+                            if not safe_channel:
+                                logs.append(f"EXEC: PUBLISH -> SKIPPED (empty channel)")
+                                continue
+                            
+                            # Use double quotes for values
+                            res = redis_cmd(f'PUBLISH {safe_channel} "{safe_value}"')
                             if res and res.isdigit():
                                 logs.append(f"EXEC: PUBLISH {channel} -> {res} subscribers")
                             else:
@@ -517,8 +552,18 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
             setInterval(() => {
                 fetch('/api/data').then(r=>r.json()).then(d=>{
                     document.getElementById('price').innerText = '$' + d.price.toLocaleString();
-                    let strat = JSON.parse(d.strategy || '{}');
-                    document.getElementById('mode').innerText = strat.version || 'OFFLINE';
+                    // Bug fix: Safely parse strategy - it might be a string like "OFFLINE" or a JSON string
+                    let stratVersion = 'OFFLINE';
+                    if (d.strategy && d.strategy !== 'OFFLINE') {
+                        try {
+                            let strat = JSON.parse(d.strategy);
+                            stratVersion = strat.version || 'OFFLINE';
+                        } catch(e) {
+                            // Not valid JSON, use as-is
+                            stratVersion = d.strategy;
+                        }
+                    }
+                    document.getElementById('mode').innerText = stratVersion;
                 }).catch(e => console.error('Data fetch error:', e));
             }, 1000);
             
@@ -548,8 +593,12 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
                 btnEl.innerHTML = '<span class="loading"></span>';
                 
                 // Show user message
+                // Bug fix: Use textContent to prevent XSS attacks
                 inputEl.value = '';
-                chatEl.innerHTML += `<div class="msg user">${txt}</div>`;
+                const userMsgDiv = document.createElement('div');
+                userMsgDiv.className = 'msg user';
+                userMsgDiv.textContent = txt;  // textContent automatically escapes HTML
+                chatEl.appendChild(userMsgDiv);
                 chatEl.scrollTop = chatEl.scrollHeight;
                 
                 try {
@@ -570,15 +619,34 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
                     let data = await response.json();
                     
                     if (data.error) {
-                        chatEl.innerHTML += `<div class="msg error">HATA: ${data.error}</div>`;
+                        // Bug fix: Use textContent to prevent XSS attacks
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'msg error';
+                        errorDiv.textContent = `HATA: ${data.error}`;
+                        chatEl.appendChild(errorDiv);
                     } else {
-                        let resp = (data.response || '').replace(/\\n/g, '<br>').replace(/\\r/g, '');
-                        let newlineRegex = new RegExp('\\n', 'g');
-                        resp = resp.replace(newlineRegex, '<br>');
-                        chatEl.innerHTML += `<div class="msg ai">${resp || 'Yanıt alınamadı'}</div>`;
+                        // Bug fix: Properly escape HTML while preserving newlines as <br>
+                        let resp = data.response || 'Yanıt alınamadı';
+                        // Escape HTML entities first
+                        const escapeHtml = (text) => {
+                            const div = document.createElement('div');
+                            div.textContent = text;
+                            return div.innerHTML;
+                        };
+                        // Convert newlines to <br> after escaping
+                        // Bug fix: Replace \r\n FIRST, then single \n, to handle Windows line endings correctly
+                        resp = escapeHtml(resp).replace(/\r\n/g, '<br>').replace(/\n/g, '<br>').replace(/\r/g, '<br>');
+                        const aiMsgDiv = document.createElement('div');
+                        aiMsgDiv.className = 'msg ai';
+                        aiMsgDiv.innerHTML = resp;  // Safe now - already escaped
+                        chatEl.appendChild(aiMsgDiv);
                     }
                 } catch(error) {
-                    chatEl.innerHTML += `<div class="msg error">HATA: ${error.message || 'Bağlantı hatası'}</div>`;
+                    // Bug fix: Use textContent to prevent XSS attacks
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'msg error';
+                    errorDiv.textContent = `HATA: ${error.message || 'Bağlantı hatası'}`;
+                    chatEl.appendChild(errorDiv);
                 } finally {
                     isSending = false;
                     btnEl.disabled = false;
@@ -633,13 +701,27 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
             self.wfile.write(html.encode('utf-8'))
         elif self.path == '/api/data':
             self.send_response(200)
+            self.send_header('Content-type', 'application/json')
             self.end_headers()
             self.wfile.write(json.dumps(get_system_state()).encode())
         elif self.path == '/api/system-status':
             # Comprehensive system status
+            # Test Redis connection properly
+            redis_ping = redis_cmd("PING")
+            redis_connected = redis_ping is not None and ('+PONG' in redis_ping or 'PONG' in redis_ping or 'OK' in redis_ping)
+            
             status = {
-                "redis": {"connected": redis_cmd("PING") is not None, "host": REDIS_HOST, "port": REDIS_PORT},
-                "seraph": {"online": API_KEY is not None, "model": os.getenv("SERAPH_MODEL", "claude-sonnet-4-5-20250929")},
+                "redis": {
+                    "connected": redis_connected, 
+                    "host": REDIS_HOST, 
+                    "port": REDIS_PORT,
+                    "ping_response": redis_ping[:50] if redis_ping else None
+                },
+                "seraph": {
+                    "online": API_KEY is not None and len(API_KEY) > 50, 
+                    "model": os.getenv("SERAPH_MODEL", "claude-sonnet-4-5-20250929"),
+                    "api_key_length": len(API_KEY) if API_KEY else 0
+                },
                 "market_feed": {"status": "unknown"},  # Can be enhanced
                 "synthia": {"status": "unknown"},  # Can be enhanced
                 "uptime": time.time()  # Server start time
@@ -707,14 +789,6 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
             self.send_response(404)
             self.end_headers()
 
-# Try to find available port before starting server
-try:
-    PORT = find_available_port(PORT)
-    if PORT != 8000:
-        print(f"[INFO] Port 8000 is in use, using port {PORT} instead")
-except:
-    pass  # Use default port if check fails
-
 # Wrap main execution in try-except to catch any NameError or other exceptions
 try:
     print(f">> GODBRAIN SERVER ON PORT {PORT}")
@@ -742,35 +816,52 @@ def open_browser(port):
 
 # Main execution - wrap in try-except to catch any NameError or other exceptions
 try:
-    # Start browser in background thread
-    if webbrowser is not None:
-        try:
-            browser_thread = threading.Thread(target=open_browser, args=(PORT,), daemon=True)
-            browser_thread.start()
-        except NameError as e:
-            print(f"[ERROR] NameError in browser thread: {e}")
-            print(f"[INFO] Please open manually: http://localhost:{PORT}")
-        except Exception as e:
-            print(f"[WARNING] Could not start browser thread: {e}")
-            print(f"[INFO] Please open manually: http://localhost:{PORT}")
-    else:
-        print(f"[INFO] Browser will not open automatically. Please open manually: http://localhost:{PORT}")
-
     # Start HTTP server
+    # Bug fix: Browser thread is started AFTER successful server binding to ensure correct port
+    server_started = False
+    actual_port = PORT
+    
     try:
         with ThreadedHTTPServer(("", PORT), RequestHandler) as httpd:
-            print(f"[SUCCESS] HTTP server started on port {PORT}")
-            print(f"[INFO] Server is ready. Open http://localhost:{PORT} in your browser")
+            actual_port = PORT
+            server_started = True
+            print(f"[SUCCESS] HTTP server started on port {actual_port}")
+            print(f"[INFO] Server is ready. Open http://localhost:{actual_port} in your browser")
+            
+            # Start browser thread AFTER successful server binding
+            if webbrowser is not None:
+                try:
+                    browser_thread = threading.Thread(target=open_browser, args=(actual_port,), daemon=True)
+                    browser_thread.start()
+                except Exception as e:
+                    print(f"[WARNING] Could not start browser thread: {e}")
+                    print(f"[INFO] Please open manually: http://localhost:{actual_port}")
+            else:
+                print(f"[INFO] Browser will not open automatically. Please open manually: http://localhost:{actual_port}")
+            
             httpd.serve_forever()
     except OSError as e:
         if "10048" in str(e) or "address already in use" in str(e).lower():
             # Port is in use, try to find another port
             print(f"[WARNING] Port {PORT} is already in use. Trying alternative port...")
-            PORT = find_available_port(PORT + 1)
+            actual_port = find_available_port(PORT + 1)
             try:
-                with ThreadedHTTPServer(("", PORT), RequestHandler) as httpd:
-                    print(f"[SUCCESS] HTTP server started on port {PORT}")
-                    print(f"[INFO] Server is ready. Open http://localhost:{PORT} in your browser")
+                with ThreadedHTTPServer(("", actual_port), RequestHandler) as httpd:
+                    server_started = True
+                    print(f"[SUCCESS] HTTP server started on port {actual_port}")
+                    print(f"[INFO] Server is ready. Open http://localhost:{actual_port} in your browser")
+                    
+                    # Start browser thread AFTER successful server binding with correct port
+                    if webbrowser is not None:
+                        try:
+                            browser_thread = threading.Thread(target=open_browser, args=(actual_port,), daemon=True)
+                            browser_thread.start()
+                        except Exception as e:
+                            print(f"[WARNING] Could not start browser thread: {e}")
+                            print(f"[INFO] Please open manually: http://localhost:{actual_port}")
+                    else:
+                        print(f"[INFO] Browser will not open automatically. Please open manually: http://localhost:{actual_port}")
+                    
                     httpd.serve_forever()
             except Exception as e2:
                 print(f"[ERROR] Could not start HTTP server on any port: {e2}")

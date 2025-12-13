@@ -1,0 +1,31 @@
+# ==============================================================================
+# GODBRAIN VOLTRAN - Main Trading Engine (Lightweight - No PyTorch)
+# Includes: agg.py, genetics labs
+# ==============================================================================
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements first for caching
+COPY requirements-voltran.txt .
+RUN pip install --no-cache-dir -r requirements-voltran.txt
+
+# Copy all source code
+COPY . .
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV GODBRAIN_ROOT=/app
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD pgrep -f "agg.py" || exit 1
+
+# Run the aggregator
+CMD ["python", "agg.py"]
+

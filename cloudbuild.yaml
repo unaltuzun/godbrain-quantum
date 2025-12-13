@@ -1,0 +1,55 @@
+# ==============================================================================
+# GODBRAIN QUANTUM - Cloud Build Configuration
+# ==============================================================================
+# Builds Docker images using GCP Cloud Build (no local Docker needed)
+# ==============================================================================
+
+steps:
+  # Build Dashboard image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/godbrain-dashboard:latest'
+      - '-f'
+      - 'Dockerfile'
+      - '.'
+    id: 'build-dashboard'
+
+  # Build Market Feed image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/godbrain-market-feed:latest'
+      - '-f'
+      - 'Dockerfile.market-feed'
+      - '.'
+    id: 'build-market-feed'
+
+  # Push Dashboard image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'gcr.io/$PROJECT_ID/godbrain-dashboard:latest'
+    id: 'push-dashboard'
+    waitFor: ['build-dashboard']
+
+  # Push Market Feed image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'gcr.io/$PROJECT_ID/godbrain-market-feed:latest'
+    id: 'push-market-feed'
+    waitFor: ['build-market-feed']
+
+images:
+  - 'gcr.io/$PROJECT_ID/godbrain-dashboard:latest'
+  - 'gcr.io/$PROJECT_ID/godbrain-market-feed:latest'
+
+options:
+  machineType: 'E2_HIGHCPU_8'
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: '1200s'
+

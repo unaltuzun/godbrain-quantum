@@ -1,0 +1,189 @@
+# ==============================================================================
+# GODBRAIN QUANTUM - Kubernetes Deployment & Service
+# ==============================================================================
+# This deployment includes:
+# 1. god-dashboard: Dashboard + Seraph AI (Port 8000)
+# 2. market-feed: OKX price feeder (no HTTP port)
+# ==============================================================================
+
+---
+# Dashboard + Seraph Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: godbrain-dashboard
+  labels:
+    app: godbrain
+    component: dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: godbrain
+      component: dashboard
+  template:
+    metadata:
+      labels:
+        app: godbrain
+        component: dashboard
+    spec:
+      containers:
+      - name: dashboard
+        image: gcr.io/project-9ad1ce66-06b2-4a7f-bad/godbrain-dashboard:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+          name: http
+          protocol: TCP
+        env:
+        - name: PORT
+          value: "8000"
+        - name: REDIS_HOST
+          valueFrom:
+            secretKeyRef:
+              name: godbrain-secrets
+              key: REDIS_HOST
+        - name: REDIS_PORT
+          valueFrom:
+            secretKeyRef:
+              name: godbrain-secrets
+              key: REDIS_PORT
+        - name: REDIS_PASS
+          valueFrom:
+            secretKeyRef:
+              name: godbrain-secrets
+              key: REDIS_PASS
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: godbrain-secrets
+              key: ANTHROPIC_API_KEY
+        - name: SERAPH_MODEL
+          valueFrom:
+            secretKeyRef:
+              name: godbrain-secrets
+              key: SERAPH_MODEL
+          optional: true
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+
+---
+# Market Feed Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: godbrain-market-feed
+  labels:
+    app: godbrain
+    component: market-feed
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: godbrain
+      component: market-feed
+  template:
+    metadata:
+      labels:
+        app: godbrain
+        component: market-feed
+    spec:
+      containers:
+      - name: market-feed
+        image: gcr.io/project-9ad1ce66-06b2-4a7f-bad/godbrain-market-feed:latest
+        imagePullPolicy: Always
+        env:
+        - name: REDIS_HOST
+          valueFrom:
+            secretKeyRef:
+              name: godbrain-secrets
+              key: REDIS_HOST
+        - name: REDIS_PORT
+          valueFrom:
+            secretKeyRef:
+              name: godbrain-secrets
+              key: REDIS_PORT
+        - name: REDIS_PASS
+          valueFrom:
+            secretKeyRef:
+              name: godbrain-secrets
+              key: REDIS_PASS
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "50m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - "pgrep -f 'market_feed.py' || exit 1"
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+
+---
+# Dashboard Service (LoadBalancer)
+apiVersion: v1
+kind: Service
+metadata:
+  name: godbrain-dashboard-service
+  labels:
+    app: godbrain
+    component: dashboard
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  selector:
+    app: godbrain
+    component: dashboard
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+
+---
+# Redis Service (if Redis is deployed in cluster)
+# Uncomment if you're running Redis in the same cluster
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: redis-service
+# spec:
+#   type: ClusterIP
+#   ports:
+#   - port: 6379
+#     targetPort: 6379
+#     protocol: TCP
+#   selector:
+#     app: redis
+

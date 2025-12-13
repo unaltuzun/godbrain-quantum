@@ -6,10 +6,12 @@ import json
 import random
 import sys
 
-# --- CONFIG ---
-REDIS_HOST = '127.0.0.1'
-REDIS_PORT = 16379
-REDIS_PASS = 'voltran2024'
+# --- CONFIG (Environment-aware) ---
+# Default port 16379 matches main system for localhost
+# Docker overrides with REDIS_PORT=6379 from docker-compose.yml
+REDIS_HOST = os.getenv('REDIS_HOST', '127.0.0.1')
+REDIS_PORT = int(os.getenv('REDIS_PORT', '16379'))
+REDIS_PASS = os.getenv('REDIS_PASS', 'voltran2024')
 KEY_MODEL = 'godbrain:model:linear'
 KEY_TICKER = 'godbrain:market:ticker'
 

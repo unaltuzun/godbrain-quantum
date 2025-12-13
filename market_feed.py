@@ -3,11 +3,30 @@ import json
 import socket
 import urllib.request
 import sys
+import os
 
-REDIS_HOST = '127.0.0.1'
-REDIS_PORT = 16379
-REDIS_PASS = 'voltran2024'
-KEY_TICKER = 'godbrain:market:ticker'
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # python-dotenv not available, use environment variables only
+
+# Load configuration from environment variables (with .env support)
+# Bug fix: Safe integer conversion with error handling (consistent with god_dashboard.py)
+def safe_int_env(key, default):
+    """Safely convert environment variable to integer with fallback to default."""
+    try:
+        value = os.getenv(key, str(default))
+        return int(value)
+    except (ValueError, TypeError):
+        print(f"[WARNING] Invalid value for {key}, using default: {default}")
+        return int(default)
+
+REDIS_HOST = os.getenv("REDIS_HOST", "127.0.0.1")
+REDIS_PORT = safe_int_env("REDIS_PORT", 16379)
+REDIS_PASS = os.getenv("REDIS_PASS", "voltran2024")
+KEY_TICKER = os.getenv("REDIS_KEY_TICKER", "godbrain:market:ticker")
 
 # OKX API ENDPOINT (PUBLIC)
 API_URL = "https://www.okx.com/api/v5/market/ticker?instId=BTC-USDT"

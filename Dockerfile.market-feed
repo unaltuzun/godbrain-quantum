@@ -1,0 +1,30 @@
+# ==============================================================================
+# GODBRAIN QUANTUM - Market Feed Dockerfile
+# ==============================================================================
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements first for better caching
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY . .
+
+# Environment variables will be provided via Kubernetes Secrets
+# No hardcoded secrets in Dockerfile
+
+# Health check (market feed doesn't expose HTTP, so we check if Python process is running)
+# Using ps instead of pgrep (more reliable in slim images)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD ps aux | grep -v grep | grep "market_feed.py" || exit 1
+
+# Run market_feed.py (OKX price feeder)
+CMD ["python", "market_feed.py"]
+

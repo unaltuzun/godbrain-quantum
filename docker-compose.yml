@@ -1,0 +1,169 @@
+# ==============================================================================
+# GODBRAIN QUANTUM - Full System Docker Compose
+# ==============================================================================
+# Services:
+#   - redis: Central data store
+#   - market-feed: OKX real-time price feed
+#   - dashboard: Web UI + Seraph AI
+#   - voltran: Main trading aggregator (agg.py)
+#   - genetics: Blackjack/Roulette/Chaos Labs
+#   - synthia: Autonomous healing system
+# ==============================================================================
+version: '3.8'
+
+services:
+  # ============================================================================
+  # REDIS - Central Data Store
+  # ============================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: godbrain-redis
+    ports:
+      - "16379:6379"
+    command: redis-server --requirepass ${REDIS_PASS:-voltran2024}
+    volumes:
+      - redis-data:/data
+    networks:
+      - godbrain-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASS:-voltran2024}", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ============================================================================
+  # MARKET FEED - OKX Real-time Price
+  # ============================================================================
+  market-feed:
+    build:
+      context: .
+      dockerfile: Dockerfile.market-feed
+    container_name: godbrain-market-feed
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASS=${REDIS_PASS:-voltran2024}
+    restart: unless-stopped
+    networks:
+      - godbrain-network
+
+  # ============================================================================
+  # DASHBOARD - Web UI + Seraph AI
+  # ============================================================================
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: godbrain-dashboard
+    ports:
+      - "8000:8000"
+    depends_on:
+      redis:
+        condition: service_healthy
+      market-feed:
+        condition: service_started
+    environment:
+      - PORT=8000
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASS=${REDIS_PASS:-voltran2024}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - SERAPH_MODEL=${SERAPH_MODEL:-claude-sonnet-4-5-20250929}
+    restart: unless-stopped
+    networks:
+      - godbrain-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; s=socket.socket(); s.connect(('localhost', 8000)); s.close()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ============================================================================
+  # VOLTRAN - Main Trading Aggregator
+  # ============================================================================
+  voltran:
+    build:
+      context: .
+      dockerfile: Dockerfile.voltran
+    container_name: godbrain-voltran
+    depends_on:
+      redis:
+        condition: service_healthy
+      market-feed:
+        condition: service_started
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASS=${REDIS_PASS:-voltran2024}
+      - GENETICS_REDIS_HOST=redis
+      - GENETICS_REDIS_PORT=6379
+      - GENETICS_REDIS_PASSWORD=${REDIS_PASS:-voltran2024}
+      - LABS_REDIS_HOST=redis
+      - LABS_REDIS_PORT=6379
+      - LABS_REDIS_PASSWORD=${REDIS_PASS:-voltran2024}
+      - OKX_API_KEY=${OKX_API_KEY}
+      - OKX_SECRET=${OKX_SECRET}
+      - OKX_PASSWORD=${OKX_PASSWORD}
+      - OKX_USE_DEMO=${OKX_USE_DEMO:-true}
+      - GODBRAIN_ROOT=/app
+    restart: unless-stopped
+    networks:
+      - godbrain-network
+    volumes:
+      - ./logs:/app/logs
+      - ./config:/app/config
+
+  # ============================================================================
+  # GENETICS LABS - Blackjack/Roulette/Chaos Evolution
+  # ============================================================================
+  genetics:
+    build:
+      context: .
+      dockerfile: Dockerfile.genetics
+    container_name: godbrain-genetics
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASS=${REDIS_PASS:-voltran2024}
+    restart: unless-stopped
+    networks:
+      - godbrain-network
+
+  # ============================================================================
+  # SYNTHIA - Autonomous Healing System
+  # ============================================================================
+  synthia:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: godbrain-synthia
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASS=${REDIS_PASS:-voltran2024}
+    command: ["python", "core/synthia_consciousness.py"]
+    restart: unless-stopped
+    networks:
+      - godbrain-network
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "synthia_consciousness.py"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  redis-data:
+
+networks:
+  godbrain-network:
+    driver: bridge

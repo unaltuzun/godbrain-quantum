@@ -10,11 +10,20 @@ import time
 from concurrent.futures import ProcessPoolExecutor
 from typing import List, Tuple
 
+import os
+
 try:
     import redis
     REDIS_AVAILABLE = True
 except ImportError:
     REDIS_AVAILABLE = False
+
+# Environment-aware Redis config
+# Default port 16379 matches main system (god_dashboard, market_feed)
+# Docker overrides with REDIS_PORT=6379 from docker-compose.yml
+REDIS_HOST = os.getenv('REDIS_HOST', '127.0.0.1')
+REDIS_PORT = int(os.getenv('REDIS_PORT', '16379'))
+REDIS_PASS = os.getenv('REDIS_PASS', 'voltran2024')
 
 POPULATION_SIZE = 50
 SPINS_PER_EVAL = 10000
@@ -98,16 +107,22 @@ def eval_wrapper(dna):
     _, _, _, score = evaluate_survival(dna)
     return dna, score
 
-def run_evolution(redis_host="127.0.0.1", redis_port=6379):
+def run_evolution(redis_host=None, redis_port=None, redis_pass=None):
+    # Use environment variables if not provided
+    redis_host = redis_host or REDIS_HOST
+    redis_port = redis_port or REDIS_PORT
+    redis_pass = redis_pass or REDIS_PASS
+    
     print("=" * 60)
     print("  🐺 ROULETTE SURVIVAL LAB")
     print("  Testing DNA in zero-edge universe")
+    print(f"  Redis: {redis_host}:{redis_port}")
     print("=" * 60)
     
     r = None
     if REDIS_AVAILABLE:
         try:
-            r = redis.Redis(host=redis_host, port=redis_port, decode_responses=True)
+            r = redis.Redis(host=redis_host, port=redis_port, password=redis_pass, decode_responses=True)
             r.ping()
             print("[ROULETTE] Redis connected")
         except:
@@ -165,7 +180,8 @@ def run_evolution(redis_host="127.0.0.1", redis_port=6379):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("--redis-host", default="127.0.0.1")
-    parser.add_argument("--redis-port", type=int, default=6379)
+    parser.add_argument("--redis-host", default=None)
+    parser.add_argument("--redis-port", type=int, default=None)
+    parser.add_argument("--redis-pass", default=None)
     args = parser.parse_args()
-    run_evolution(args.redis_host, args.redis_port)
+    run_evolution(args.redis_host, args.redis_port, args.redis_pass)
