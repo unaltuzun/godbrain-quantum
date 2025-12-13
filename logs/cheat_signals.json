@@ -1,0 +1,118 @@
+{
+  "timestamp": "2025-12-12T23:37:21.935850",
+  "signals": [
+    {
+      "symbol": "BTC/USDT:USDT",
+      "action": "SHORT",
+      "entry": 89860.9,
+      "tp": 87165.07299999999,
+      "sl": 91208.81349999999,
+      "size_usd": 10.0,
+      "leverage": 14,
+      "confidence": 0.6632225328508092,
+      "urgency": "IMMEDIATE",
+      "reasoning": [
+        "Coherence: 0.64 (STANDARD_FLOW)",
+        "Flow: 1.00x | Quantum: \u26aa",
+        "Hunt: WATCH_SHORT_ZONE @ $90102.81",
+        "Funding: -0.0097% \u2192 Neutral",
+        "Price: $89860.9000 (-1.53% 24h)"
+      ]
+    },
+    {
+      "symbol": "XRP/USDT:USDT",
+      "action": "LONG",
+      "entry": 1.9991,
+      "tp": 2.059073,
+      "sl": 1.9691135,
+      "size_usd": 10.0,
+      "leverage": 14,
+      "confidence": 0.6,
+      "urgency": "IMMEDIATE",
+      "reasoning": [
+        "Coherence: 0.64 (STANDARD_FLOW)",
+        "Flow: 1.00x | Quantum: \u26aa",
+        "Hunt: WATCH_SHORT_ZONE @ $2.00",
+        "Funding: -0.0240% \u2192 LONG bias (shorts pay)",
+        "Price: $1.9991 (-0.91% 24h)"
+      ]
+    },
+    {
+      "symbol": "PEPE/USDT:USDT",
+      "action": "LONG",
+      "entry": 4.261e-06,
+      "tp": 4.388830000000001e-06,
+      "sl": 4.197085000000001e-06,
+      "size_usd": 10.0,
+      "leverage": 14,
+      "confidence": 0.6,
+      "urgency": "IMMEDIATE",
+      "reasoning": [
+        "Coherence: 0.64 (STANDARD_FLOW)",
+        "Flow: 1.00x | Quantum: \u26aa",
+        "Hunt: WATCH_SHORT_ZONE @ $0.00",
+        "Funding: -0.0202% \u2192 LONG bias (shorts pay)",
+        "Price: $0.0000 (-6.08% 24h)"
+      ]
+    },
+    {
+      "symbol": "SHIB/USDT:USDT",
+      "action": "LONG",
+      "entry": 8.168e-06,
+      "tp": 8.41304e-06,
+      "sl": 8.04548e-06,
+      "size_usd": 10.0,
+      "leverage": 14,
+      "confidence": 0.6,
+      "urgency": "IMMEDIATE",
+      "reasoning": [
+        "Coherence: 0.64 (STANDARD_FLOW)",
+        "Flow: 1.00x | Quantum: \u26aa",
+        "Hunt: WATCH_SHORT_ZONE @ $0.00",
+        "Funding: -0.0406% \u2192 LONG bias (shorts pay)",
+        "Price: $0.0000 (-2.92% 24h)"
+      ]
+    },
+    {
+      "symbol": "FLOKI/USDT:USDT",
+      "action": "LONG",
+      "entry": 4.545e-05,
+      "tp": 4.68135e-05,
+      "sl": 4.476825e-05,
+      "size_usd": 10.0,
+      "leverage": 14,
+      "confidence": 0.6,
+      "urgency": "IMMEDIATE",
+      "reasoning": [
+        "Coherence: 0.64 (STANDARD_FLOW)",
+        "Flow: 1.00x | Quantum: \u26aa",
+        "Hunt: WATCH_SHORT_ZONE @ $0.00",
+        "Funding: -0.0274% \u2192 LONG bias (shorts pay)",
+        "Price: $0.0000 (-4.01% 24h)"
+      ]
+    },
+    {
+      "symbol": "BONK/USDT:USDT",
+      "action": "LONG",
+      "entry": 9.063e-06,
+      "tp": 9.33489e-06,
+      "sl": 8.927055e-06,
+      "size_usd": 10.0,
+      "leverage": 14,
+      "confidence": 0.6,
+      "urgency": "IMMEDIATE",
+      "reasoning": [
+        "Coherence: 0.64 (STANDARD_FLOW)",
+        "Flow: 1.00x | Quantum: \u26aa",
+        "Hunt: WATCH_SHORT_ZONE @ $0.00",
+        "Funding: -0.0253% \u2192 LONG bias (shorts pay)",
+        "Price: $0.0000 (-2.42% 24h)"
+      ]
+    }
+  ],
+  "universe": {
+    "coherence": 0.6448,
+    "quantum_active": false,
+    "flow_multiplier": 1.0
+  }
+}

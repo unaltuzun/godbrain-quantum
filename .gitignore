@@ -1,0 +1,29 @@
+# Python Sanal Ortamları (BUNLAR YUKLENMEZ)
+.venv/
+venv/
+_archive/venv/
+ENV/
+env/
+
+# Derlenmiş Dosyalar
+__pycache__/
+*.pyc
+*.pyo
+
+# Gizli Anahtarlar (GÜVENLİK İÇİN ÖNEMLİ)
+.env
+.env.local
+
+# Log Dosyaları
+*.log
+
+# Cursor/VS Code Ayarları
+.vscode/
+.cursor/
+
+# ... (diğer içerikler) ...
+
+# ÇATIŞMA YARATAN DİZİNLER (Fatal Errors)
+godlang/logs_main
+godlang/logs/
+_archive/

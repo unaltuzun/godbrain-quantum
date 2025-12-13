@@ -1,0 +1,11 @@
+{
+  "timestamp": "2025-12-12T23:41:46.794939",
+  "params": {
+    "stop_loss_pct": -2.897279900663312,
+    "take_profit_pct": 7.819761257781629,
+    "rsi_buy_level": 30.895980432608145,
+    "rsi_sell_level": 82.8628396229292,
+    "position_size_factor": 1.0
+  },
+  "generation": 1
+}

@@ -1,0 +1,10 @@
+{
+  "apiKey": "a8445c15-ca3e-4d9a-86b2-f7dd8adc773b",
+  "secret": "C5BB8981D438FE97AAAFCDACB7082B46",
+  "password": "Godbrain123.",
+  "use_demo": true,
+  "defaultType": "swap",
+  "position_mode": "isolated",
+  "leverage": 2
+}
+

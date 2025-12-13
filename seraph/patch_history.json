@@ -1,0 +1,125 @@
+{
+  "patches": [
+    {
+      "id": "20251209125613_a7da5b",
+      "timestamp": "2025-12-09T12:56:13.572803",
+      "target_file": "/mnt/c/godbrain-quantum/ultimate_pack/regime/regime_detector.py",
+      "backup_path": "/mnt/c/godbrain-quantum/seraph/backups/regime_detector_20251209_125613_20251209125613_a7da5b.py",
+      "description": "Regime değişim cooldown süresini 5 dakikadan 10 dakikaya çıkardık.",
+      "changes": [
+        "Replaced: COOLDOWN_SEC = 300..."
+      ],
+      "rolled_back": false
+    },
+    {
+      "id": "20251209174052_85ccc2",
+      "timestamp": "2025-12-09T17:40:52.452215",
+      "target_file": "/mnt/c/godbrain-quantum/agg.py",
+      "backup_path": "/mnt/c/godbrain-quantum/seraph/backups/agg_20251209_174052_20251209174052_85ccc2.py",
+      "description": "agg.py dosyasında, 82. satırdaki \"BTC/USDT\" ifadesini \"BTC/USDT:USDT\" olarak değiştiriyoruz.",
+      "changes": [
+        "Replaced: \"BTC/USDT\"..."
+      ],
+      "rolled_back": false
+    },
+    {
+      "id": "20251209174056_623cf5",
+      "timestamp": "2025-12-09T17:40:56.291539",
+      "target_file": "/mnt/c/godbrain-quantum/agg.py",
+      "backup_path": "/mnt/c/godbrain-quantum/seraph/backups/agg_20251209_174056_20251209174056_623cf5.py",
+      "description": "agg.py dosyasının 89. satırındaki \"BTC/USDT\" ifadesi \"BTC/USDT:USDT\" olarak değiştiriliyor.",
+      "changes": [
+        "Replaced: \"BTC/USDT\"..."
+      ],
+      "rolled_back": false
+    },
+    {
+      "id": "20251209174204_6c4c10",
+      "timestamp": "2025-12-09T17:42:04.274006",
+      "target_file": "/mnt/c/godbrain-quantum/agg.py",
+      "backup_path": "/mnt/c/godbrain-quantum/seraph/backups/agg_20251209_174204_20251209174204_6c4c10.py",
+      "description": "agg.py dosyasının 105. satırındaki \"BTC/USDT\" ifadesi \"BTC/USDT:USDT\" olarak değiştiriliyor",
+      "changes": [
+        "Replaced: \"BTC/USDT\"..."
+      ],
+      "rolled_back": false
+    },
+    {
+      "id": "20251209181417_583b40",
+      "timestamp": "2025-12-09T18:14:17.081585",
+      "target_file": "/mnt/c/godbrain-quantum/ultimate_pack/regime/regime_detector.py",
+      "backup_path": "/mnt/c/godbrain-quantum/seraph/backups/regime_detector_20251209_181417_20251209181417_583b40.py",
+      "description": "Mevcut rejim durumu UNKNOWN değilse, cooldown süresinin bitmesini beklemeden rejim değişimini kabul etmiyoruz.",
+      "changes": [
+        "Replaced: if time_diff < self.COOLDOWN_SEC and regime != Reg..."
+      ],
+      "rolled_back": false
+    },
+    {
+      "id": "20251209223607_25050e",
+      "timestamp": "2025-12-09T22:36:07.262414",
+      "target_file": "/mnt/c/godbrain-quantum/godmoney_apex.py",
+      "backup_path": "/mnt/c/godbrain-quantum/seraph/backups/godmoney_apex_20251209_223607_20251209223607_25050e.py",
+      "description": "Azami özkaynak kullanım oranını %50'den %70'e yükseltiyoruz",
+      "changes": [
+        "Replaced: MAX_EQUITY_UTIL = 0.50..."
+      ],
+      "rolled_back": false
+    },
+    {
+      "id": "20251209225016_18c71b",
+      "timestamp": "2025-12-09T22:50:16.988318",
+      "target_file": "/mnt/c/godbrain-quantum/ultimate_pack/ultimate_connector.py",
+      "backup_path": "/mnt/c/godbrain-quantum/seraph/backups/ultimate_connector_20251209_225016_20251209225016_18c71b.py",
+      "description": "ultimate_connector.py dosyasının 58. satırındaki 'is_trending_up' kontrolüne 'EUPHORIA' rejiminin de eklenmesi",
+      "changes": [
+        "Replaced: is_trending_up = \"TRENDING_UP\" in regime_sig.regim..."
+      ],
+      "rolled_back": false
+    },
+    {
+      "id": "20251209225439_28aaa0",
+      "timestamp": "2025-12-09T22:54:39.198502",
+      "target_file": "/mnt/c/godbrain-quantum/godmoney_apex.py",
+      "backup_path": "/mnt/c/godbrain-quantum/seraph/backups/godmoney_apex_20251209_225439_20251209225439_28aaa0.py",
+      "description": "godmoney_apex.py dosyasındaki azami özkaynak kullanım oranı %70'den %90'a yükseltildi",
+      "changes": [
+        "Replaced: MAX_EQUITY_UTIL = 0.70..."
+      ],
+      "rolled_back": false
+    },
+    {
+      "id": "20251209225527_ddeea6",
+      "timestamp": "2025-12-09T22:55:27.735012",
+      "target_file": "/mnt/c/godbrain-quantum/godmoney_apex.py",
+      "backup_path": "/mnt/c/godbrain-quantum/seraph/backups/godmoney_apex_20251209_225527_20251209225527_ddeea6.py",
+      "description": "godmoney_apex.py dosyasındaki azami kaldıraç oranı 5x'ten 8x'e yükseltiliyor.",
+      "changes": [
+        "Replaced: MAX_LEVERAGE = 5..."
+      ],
+      "rolled_back": false
+    },
+    {
+      "id": "20251211053905_7c6ff2",
+      "timestamp": "2025-12-11T05:39:05.657421",
+      "target_file": "/mnt/c/godbrain-quantum/godmoney_apex.py",
+      "backup_path": "/mnt/c/godbrain-quantum/seraph/backups/godmoney_apex_20251211_053905_20251211053905_7c6ff2.py",
+      "description": "Increase max leverage to 30x",
+      "changes": [
+        "Replaced: MAX_LEVERAGE = 20"
+      ],
+      "rolled_back": false
+    },
+    {
+      "id": "20251211053945_7b1756",
+      "timestamp": "2025-12-11T05:39:45.564229",
+      "target_file": "/mnt/c/godbrain-quantum/godmoney_apex.py",
+      "backup_path": "/mnt/c/godbrain-quantum/seraph/backups/godmoney_apex_20251211_053945_20251211053945_7b1756.py",
+      "description": "Decrease max leverage from 30x to 10x",
+      "changes": [
+        "Replaced: MAX_LEVERAGE = 30"
+      ],
+      "rolled_back": false
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "max_daily_loss_usd": 100000,
+  "block_new_entries": false,
+  "kill_switch": false,
+  "max_open_positions": 10
+}

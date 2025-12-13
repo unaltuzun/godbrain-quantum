@@ -1,0 +1,97 @@
+{
+  "timestamp": "2025-12-12T03:52:21.845748",
+  "total_generations": 10,
+  "global_champion": {
+    "universe": 100000,
+    "regime": "BULL",
+    "id": "g12965",
+    "stop_loss_pct": -4.373499830974452,
+    "take_profit_pct": 11.684848132836777,
+    "rsi_buy_level": 22.385495106902045,
+    "rsi_sell_level": 61.461377302965126,
+    "position_size_factor": 0.9266268128371536,
+    "fitness": 100,
+    "generation": 1
+  },
+  "ensemble_params": {
+    "stop_loss_pct": -2.2497612668076816,
+    "take_profit_pct": 10.104383291533294,
+    "rsi_buy_level": 24.58199777282485,
+    "rsi_sell_level": 75.87858481562985,
+    "position_size_factor": 0.7025065757387483
+  },
+  "regime_champions": {
+    "BULL": {
+      "universe": 100000,
+      "regime": "BULL",
+      "id": "g12965",
+      "stop_loss_pct": -4.373499830974452,
+      "take_profit_pct": 11.684848132836777,
+      "rsi_buy_level": 22.385495106902045,
+      "rsi_sell_level": 61.461377302965126,
+      "position_size_factor": 0.9266268128371536,
+      "fitness": 100,
+      "generation": 1
+    },
+    "BEAR": {
+      "universe": 100001,
+      "regime": "BEAR",
+      "id": "g31550",
+      "stop_loss_pct": -1.9584744047547353,
+      "take_profit_pct": 6.103254633645088,
+      "rsi_buy_level": 25.284526952870024,
+      "rsi_sell_level": 85.69005221615612,
+      "position_size_factor": 0.43672419267718066,
+      "fitness": 100,
+      "generation": 1
+    },
+    "NEUTRAL": {
+      "universe": 100002,
+      "regime": "NEUTRAL",
+      "id": "g77330",
+      "stop_loss_pct": -0.3597872021685058,
+      "take_profit_pct": 12.759181662589505,
+      "rsi_buy_level": 11.93863250615782,
+      "rsi_sell_level": 68.09916061841069,
+      "position_size_factor": 0.47367543264917866,
+      "fitness": 100,
+      "generation": 1
+    },
+    "CRASH": {
+      "universe": 100003,
+      "regime": "CRASH",
+      "id": "g30026",
+      "stop_loss_pct": -2.3229330553443037,
+      "take_profit_pct": 7.862681281512122,
+      "rsi_buy_level": 24.770938840017557,
+      "rsi_sell_level": 88.57420146845587,
+      "position_size_factor": 0.9059713637239297,
+      "fitness": 100,
+      "generation": 1
+    },
+    "EUPHORIA": {
+      "universe": 100004,
+      "regime": "EUPHORIA",
+      "id": "g12449",
+      "stop_loss_pct": -2.835362813012993,
+      "take_profit_pct": 9.662844798870125,
+      "rsi_buy_level": 23.483799228842535,
+      "rsi_sell_level": 63.244053338113844,
+      "position_size_factor": 0.4853449763442994,
+      "fitness": 100,
+      "generation": 1
+    },
+    "SIDEWAYS": {
+      "universe": 100005,
+      "regime": "SIDEWAYS",
+      "id": "g72839",
+      "stop_loss_pct": -1.6485102945910994,
+      "take_profit_pct": 12.553489239746142,
+      "rsi_buy_level": 39.628594002159126,
+      "rsi_sell_level": 88.2026639496774,
+      "position_size_factor": 0.9866966762007476,
+      "fitness": 100,
+      "generation": 1
+    }
+  }
+}

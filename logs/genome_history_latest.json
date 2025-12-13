@@ -1,0 +1,18 @@
+{
+  "epoch_time": "20251207_140158",
+  "families_detected": [
+    {
+      "id": "c19780",
+      "family": "AUTO_FROM_SYSTEM_DUMP",
+      "lore": "Auto-built genome from channel:dna in system_dump_latest.json",
+      "stats": {
+        "stop_loss_pct": -2.32,
+        "take_profit_pct": 150.03,
+        "rsi_buy_level": 5.0,
+        "rsi_sell_level": 93.3,
+        "position_size_factor": 0.52
+      },
+      "timestamp": "20251207_140158"
+    }
+  ]
+}

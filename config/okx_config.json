@@ -1,0 +1,11 @@
+{
+  "mode": "okx",
+  "symbol": "BTC/USDT",
+  "defaultType": "swap",
+  "poll_interval_sec": 1.0,
+  "paper_mode": false,
+  "apiKey": "a8445c15-ca3e-4d9a-86b2-f7dd8adc773b",
+  "secret": "C5BB8981D438FE97AAAFCDACB7082B46",
+  "password": "Godbrain123.",
+  "use_demo": true
+}

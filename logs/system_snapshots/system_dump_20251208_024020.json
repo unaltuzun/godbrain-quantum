@@ -1,0 +1,54 @@
+{
+  "channel:prom": {
+    "meta": {
+      "source": "PROMETHEUS_EYE",
+      "timestamp": "2025-12-08T05:40:17.614427",
+      "market_pressure": 0.13
+    },
+    "status": {
+      "direction": "NEUTRAL",
+      "flow_multiplier": 1.0
+    },
+    "details": {
+      "BTC/USDT:USDT": 0.9733,
+      "ETH/USDT:USDT": -0.8045,
+      "SOL/USDT:USDT": 0.221
+    }
+  },
+  "channel:macro": {
+    "timestamp": 1765161601.344172,
+    "last_update": "05:40:01",
+    "macro": {
+      "dxy": 98.91,
+      "vix": 15.41,
+      "nasdaq_chg": 0.31,
+      "us10y": 4.14
+    },
+    "system_mode": {
+      "status": "NORMAL",
+      "risk_score": -20,
+      "reasons": [
+        "Dolar Zayıf (Boğa)"
+      ]
+    }
+  },
+  "channel:dna": {
+    "meta": {
+      "source": "OMEGA_JIT",
+      "note": "Evren-617633 (Kaos: 3.8)",
+      "champion": "a7e4e3",
+      "ts": "2025-12-08T05:40:20.125355"
+    },
+    "strategy": {
+      "stop_loss_pct": -0.19,
+      "take_profit_pct": 8.96,
+      "rsi_buy_level": 6.6,
+      "rsi_sell_level": 62.8,
+      "position_size_factor": 0.14
+    }
+  },
+  "meta": {
+    "source": "GODBRAIN_CHRONICLER_V2",
+    "timestamp_utc": "20251208_024020"
+  }
+}
