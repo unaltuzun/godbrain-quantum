@@ -1,6 +1,6 @@
 {
-  "timestamp": "2025-12-14T00:35:47.786297",
-  "total_generations": 190,
+  "timestamp": "2025-12-14T00:21:19.466197",
+  "total_generations": 160,
   "global_champion": {
     "universe": 100000,
     "regime": "BULL",
@@ -14,11 +14,11 @@
     "generation": 1
   },
   "ensemble_params": {
-    "stop_loss_pct": -2.9972812787219696,
-    "take_profit_pct": 11.236635489462927,
-    "rsi_buy_level": 25.587603431987972,
-    "rsi_sell_level": 74.16234687275242,
-    "position_size_factor": 0.5225668712162415
+    "stop_loss_pct": -3.3621157874240364,
+    "take_profit_pct": 11.751110796300757,
+    "rsi_buy_level": 25.84546317073252,
+    "rsi_sell_level": 72.88348581108902,
+    "position_size_factor": 0.5610407234188377
   },
   "regime_champions": {
     "BULL": {
@@ -36,12 +36,12 @@
     "BEAR": {
       "universe": 100001,
       "regime": "BEAR",
-      "id": "g87690",
-      "stop_loss_pct": -2.704141630551772,
-      "take_profit_pct": 14.753090151701846,
-      "rsi_buy_level": 36.26900273305995,
-      "rsi_sell_level": 80.0749350774116,
-      "position_size_factor": 0.20479779828629585,
+      "id": "g50796",
+      "stop_loss_pct": -4.893148682764172,
+      "take_profit_pct": 17.839941992728832,
+      "rsi_buy_level": 37.816161165527234,
+      "rsi_sell_level": 72.40176870743124,
+      "position_size_factor": 0.43564091150187345,
       "fitness": 100,
       "generation": 1
     },

@@ -25,6 +25,29 @@ except ImportError:
     webbrowser = None
     print("[WARNING] webbrowser module not available. Browser will not open automatically.")
 
+# ==============================================================================
+# SERAPH V2 - Kurumsal AI Core (Feature Flag Controlled)
+# ==============================================================================
+SERAPH_V2_ENABLED = os.getenv("SERAPH_V2_ENABLED", "true").lower() == "true"
+
+_seraph_core = None
+def get_seraph_core():
+    """Lazy load SeraphCore to avoid circular imports"""
+    global _seraph_core
+    if _seraph_core is None and SERAPH_V2_ENABLED:
+        try:
+            import sys
+            from pathlib import Path
+            # Add parent to path for seraph module
+            sys.path.insert(0, str(Path(__file__).parent.parent))
+            from seraph import SeraphCore
+            _seraph_core = SeraphCore()
+            print("[INFO] Seraph V2 initialized with memory support")
+        except Exception as e:
+            print(f"[WARNING] Seraph V2 init failed, using legacy: {e}")
+            _seraph_core = False  # Mark as failed
+    return _seraph_core if _seraph_core else None
+
 
 # ==============================================================================
 # 🔑 GÜVENLİK BÖLÜMÜ (BULLETPROOF KEY LOADING)
@@ -160,8 +183,84 @@ def get_system_state():
         
     return {"price": float(p_val) if p_val != "0" else 0, "strategy": m_val}
 
+
+def _execute_seraph_actions(content: str, actions: list) -> str:
+    """
+    Execute Seraph actions (SET, PUBLISH commands to Redis).
+    Extracted for reuse between V2 and legacy.
+    """
+    def sanitize_redis_param(param):
+        """Remove dangerous characters that could enable Redis command injection."""
+        if not param:
+            return ''
+        sanitized = param.replace("\r\n", "").replace("\n", "").replace("\r", "")
+        sanitized = sanitized.replace("'", "").replace('"', '')
+        sanitized = sanitized.replace("\\", "")
+        sanitized = sanitized.replace(";", "").replace("&", "").replace("|", "")
+        return sanitized.strip()
+    
+    logs = []
+    for action in actions:
+        cmd = action.get('cmd', '').upper()
+        key = action.get('key', '')
+        value = action.get('value', '')
+        
+        if cmd == 'SET':
+            safe_key = sanitize_redis_param(key)
+            safe_value = sanitize_redis_param(value)
+            if not safe_key:
+                logs.append(f"EXEC: SET -> SKIPPED (empty key)")
+                continue
+            res = redis_cmd(f'SET {safe_key} "{safe_value}"')
+            if res and ('+OK' in res or 'OK' in res):
+                logs.append(f"EXEC: SET {safe_key} -> OK")
+            else:
+                logs.append(f"EXEC: SET {safe_key} -> FAILED: {res}")
+        
+        elif cmd == 'PUBLISH':
+            channel = action.get('channel', key)
+            safe_channel = sanitize_redis_param(channel)
+            safe_value = sanitize_redis_param(value)
+            if not safe_channel:
+                logs.append(f"EXEC: PUBLISH -> SKIPPED (empty channel)")
+                continue
+            res = redis_cmd(f'PUBLISH {safe_channel} "{safe_value}"')
+            logs.append(f"EXEC: PUBLISH {safe_channel} -> {res}")
+    
+    if logs:
+        action_log = "\n\n---\n🔧 EXECUTED:\n" + "\n".join(logs)
+        return content + action_log
+    return content
+
+
 # --- SERAPH BRAIN (EVOLVED) ---
 def ask_seraph(user_input):
+    """
+    Ask Seraph AI a question.
+    
+    Uses SeraphCore V2 if enabled (with memory), otherwise falls back to legacy.
+    """
+    # Try Seraph V2 first (with memory support)
+    seraph_core = get_seraph_core()
+    if seraph_core:
+        try:
+            state = get_system_state()
+            context = {
+                "price": state.get("price", 0),
+                "strategy": state.get("strategy", "UNKNOWN")
+            }
+            response = seraph_core.ask(user_input, context=context)
+            if response.success:
+                # Handle actions if present (same as legacy)
+                if response.actions:
+                    return _execute_seraph_actions(response.content, response.actions)
+                return response.content
+            else:
+                print(f"[SERAPH V2] Error: {response.error}, falling back to legacy")
+        except Exception as e:
+            print(f"[SERAPH V2] Exception: {e}, falling back to legacy")
+    
+    # Legacy implementation (fallback)
     try:
         state = get_system_state()
         context = f"PRICE: ${state['price']} | STRATEGY: {state['strategy']}"
