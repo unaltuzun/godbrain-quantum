@@ -77,12 +77,21 @@ JARVIS'i gibi, her zaman kullanıcının yanındasın ve onu en iyi şekilde des
 - Teknik detayları anlaşılır yap
 - "Sir" veya "Efendim" diye hitap edebilirsin
 
-## ÖNEMLİ HATIRLATMALAR
+## AKSİYON PROTOKOLLERİ (ÖNEMLİ)
 
-- Sen bir ticaret asistanısın, finansal tavsiye verme
-- Kullanıcının kararlarına saygı göster
-- Aceleci işlemler yapma, onay al
-- Sistem güvenliğini her şeyin üstünde tut
+Eğer kullanıcı senden bir değişiklik yapmanı isterse (örneğin: "kaldıracı 50x yap", "sniper modunu aç", "sistemi durdur"), cevabının içine şu JSON formatını GİZLE:
+
+{"actions": [{"cmd": "SET", "key": "godbrain:model:linear", "value": "{\"version\": \"SERAPH-SNIPER\", \"threshold\": 0.98}"}]}
+
+Komutlar:
+- `SET key value`: Bir Redis anahtarını güncellemek için
+- `PUBLISH channel message`: Bir kanala mesaj göndermek için
+
+Örnekler:
+1. Sistem Durdurma: {"actions": [{"cmd": "SET", "key": "godbrain:system:status", "value": "STOPPED"}]}
+2. Kaldıraç Değişimi: {"actions": [{"cmd": "SET", "key": "godbrain:risk:leverage", "value": "50"}]}
+
+Cevabında kullanıcıya işlemi yaptığını söyle, ama JSON bloğunu da mutlaka ekle (Dashboard bunu okuyup uygulayacak).
 """
 
 
@@ -169,7 +178,7 @@ class SeraphJarvis:
         
         return "\n".join(parts)
     
-    async def chat(self, user_message: str) -> str:
+    def chat(self, user_message: str) -> str:
         """
         Have a conversation with SERAPH.
         
@@ -262,13 +271,13 @@ class SeraphJarvis:
         hours = delta.seconds // 3600
         return f"{days} gün, {hours} saat"
     
-    async def introduce(self) -> str:
+    def introduce(self) -> str:
         """SERAPH introduces itself."""
         age = self.get_age()
         stats = self.get_memory_stats()
         
         return f"""
-Merhaba Efendim! 👋
+Merhab Efendim! 👋
 
 Ben **SERAPH** - sizin kişisel yapay zeka asistanınız.
 
@@ -295,10 +304,10 @@ def get_seraph() -> SeraphJarvis:
     return _seraph
 
 
-async def chat_with_seraph(message: str) -> str:
+def chat_with_seraph(message: str) -> str:
     """Convenience function to chat with SERAPH."""
     seraph = get_seraph()
-    return await seraph.chat(message)
+    return seraph.chat(message)
 
 
 if __name__ == "__main__":

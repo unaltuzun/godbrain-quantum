@@ -20,7 +20,7 @@ gcloud builds submit --config=cloudbuild-complete.yaml .
 
 # Step 2: Get cluster credentials  
 Write-Host "`n[2/4] Getting cluster credentials..." -ForegroundColor Yellow
-gcloud container clusters get-credentials godbrain-cluster --zone us-central1
+gcloud container clusters get-credentials godbrain-europe --zone europe-west1-b
 
 # Step 3: Create namespace and secrets
 Write-Host "`n[3/4] Setting up namespace and secrets..." -ForegroundColor Yellow
@@ -53,6 +53,8 @@ Write-Host "`n[4/4] Deploying to GKE..." -ForegroundColor Yellow
 $manifest = Get-Content k8s/godbrain-complete.yaml -Raw
 $manifest = $manifest -replace 'PROJECT_ID', $PROJECT_ID
 $manifest | kubectl apply -f -
+kubectl apply -f k8s/neural-trainer.yaml -n godbrain
+kubectl apply -f k8s/seraph-backup.yaml -n godbrain
 
 # Wait and show status
 Write-Host "`nWaiting for pods to start..." -ForegroundColor Yellow
