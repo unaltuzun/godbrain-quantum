@@ -105,6 +105,20 @@ except Exception as e:
     print(f"[INIT] VOLTRAN Bridge: DISABLED ({e})")
 
 # -----------------------------------------------------------------------------
+# C++ EXECUTION CORE (Zero-Latency)
+# -----------------------------------------------------------------------------
+try:
+    # Ensure build dir is in path if necessary, but wrapper handles it
+    from core_engine.python_wrapper import GodbrainEngine
+    CPP_ENGINE = GodbrainEngine()
+    print(f"[INIT] C++ CORE ENGINE: ACTIVE (v{CPP_ENGINE.version}) 🚀")
+    CPP_ENABLED = True
+except Exception as e:
+    print(f"[INIT] C++ CORE ENGINE: DISABLED (Build missing? {e})")
+    CPP_ENGINE = None
+    CPP_ENABLED = False
+
+# -----------------------------------------------------------------------------
 # FAZ 3.1 EDGE AI (Observer) - fail-safe enrichment
 # -----------------------------------------------------------------------------
 EDGE_AI_ENABLED = os.getenv("EDGE_AI_ENABLED", "true").lower() in ("1", "true", "yes", "on")

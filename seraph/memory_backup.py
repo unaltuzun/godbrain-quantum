@@ -293,22 +293,29 @@ def get_memory_backup() -> MemoryBackup:
 
 
 if __name__ == "__main__":
+    import sys
     import asyncio
     
-    async def demo():
-        print("Memory Backup Demo")
-        print("=" * 60)
-        
-        backup = MemoryBackup()
-        
-        # Create a backup
-        print("\nCreating backup...")
-        filename = await backup.backup_now({"test": "memory", "timestamp": datetime.now().isoformat()})
-        print(f"Created: {filename}")
-        
-        # List backups
-        print("\nAvailable backups:")
-        for b in await backup.list_backups():
-            print(f"  - {b['name']} ({b['location']}, {b['size']} bytes)")
+    async def run():
+        if "--demo" in sys.argv:
+            print("Memory Backup Demo")
+            print("=" * 60)
+            backup = MemoryBackup()
+            print("\nCreating demo backup...")
+            filename = await backup.backup_now({"test": "memory", "timestamp": datetime.now().isoformat()})
+            print(f"Created: {filename}")
+        else:
+            # Real backup mode (for CronJob)
+            print("🚀 Starting Seraph Memory Backup...")
+            backup = MemoryBackup()
+            try:
+                filename = await backup.backup_now()  # Loads from file automatically
+                if filename:
+                    print(f"✅ Success: {filename}")
+                else:
+                    print("⚠️ Backup finished locally only (no GCS)")
+            except Exception as e:
+                print(f"❌ Backup Failed: {e}")
+                sys.exit(1)
     
-    asyncio.run(demo())
+    asyncio.run(run())

@@ -1,0 +1,47 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: seraph-memory-backup
+  namespace: godbrain
+spec:
+  schedule: "0 */4 * * *" # Every 4 hours
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: backup-worker
+            image: us-central1-docker.pkg.dev/project-9ad1ce66-06b2-4a7f-bad/godbrain/godbrain:latest
+            imagePullPolicy: Always
+            command: ["python", "-m", "seraph.memory_backup"]
+            env:
+            - name: GCP_PROJECT_ID
+              value: "project-9ad1ce66-06b2-4a7f-bad"
+            - name: PYTHONUNBUFFERED
+              value: "1"
+            # Mount memory file from PV if needed (Seraph uses Redis mostly now)
+            # But script reads local file "seraph/memory/long_term.json"
+            # If Seraph pod saves there, we need a Shared Volume (PV)
+            volumeMounts:
+            - name: memory-storage
+              mountPath: /app/seraph/memory
+          volumes:
+          - name: memory-storage
+            persistentVolumeClaim:
+              claimName: seraph-memory-pvc
+          restartPolicy: OnFailure
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: seraph-memory-pvc
+  namespace: godbrain
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: standard

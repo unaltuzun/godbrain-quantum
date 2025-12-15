@@ -23,15 +23,9 @@ spec:
         app: godbrain
         component: neural-trainer
     spec:
-      # GPU Node selector
-      nodeSelector:
-        cloud.google.com/gke-accelerator: nvidia-tesla-t4
-      
-      # GPU Tolerations
-      tolerations:
-      - key: "nvidia.com/gpu"
-        operator: "Exists"
-        effect: "NoSchedule"
+      # CPU Deployment (No GPU constraints)
+      # nodeSelector removed
+      # tolerations removed
       
       containers:
       - name: neural-trainer
@@ -47,18 +41,14 @@ spec:
             secretKeyRef:
               name: godbrain-secrets
               key: REDIS_PASS
-        - name: CUDA_VISIBLE_DEVICES
-          value: "0"
-        - name: PYTORCH_CUDA_ALLOC_CONF
-          value: "max_split_size_mb:512"
+        - name: CAST_TYPE
+          value: "cpu"
         resources:
           limits:
-            nvidia.com/gpu: 1
-            memory: "8Gi"
+            memory: "4Gi"
             cpu: "2"
           requests:
-            nvidia.com/gpu: 1
-            memory: "4Gi"
+            memory: "2Gi"
             cpu: "1"
         volumeMounts:
         - name: model-storage

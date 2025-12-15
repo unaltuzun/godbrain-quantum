@@ -9,6 +9,8 @@ WORKDIR /app
 # Install build dependencies
 RUN apt-get update && apt-get install -y \
     gcc \
+    cmake \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for caching
@@ -17,6 +19,15 @@ RUN pip install --no-cache-dir -r requirements-voltran.txt
 
 # Copy all source code
 COPY . .
+
+# Build C++ Core
+WORKDIR /app/core_engine
+RUN mkdir -p build && cd build && \
+    cmake .. -DCMAKE_BUILD_TYPE=Release && \
+    make -j$(nproc)
+
+# Return to app root
+WORKDIR /app
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
