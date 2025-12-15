@@ -11,7 +11,46 @@ redis>=5.0.0
 # Data Science
 pandas>=2.0.0
 numpy>=1.24.0
+scipy>=1.10.0
 
 # Async & Networking
 aiohttp>=3.8.0
 websockets>=11.0
+
+# ==============================================================================
+# Enterprise Infrastructure (MIT Fintech Quant Level)
+# ==============================================================================
+
+# Testing
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.0.0
+
+# ML Experiment Tracking
+mlflow>=2.9.0
+pyarrow>=14.0.0
+
+# ==============================================================================
+# Neural Network & Deep Learning
+# ==============================================================================
+torch>=2.0.0
+torchvision>=0.15.0
+
+# Visualization
+plotly>=5.18.0
+
+# AI & LLM
+anthropic>=0.18.0
+
+# Google Cloud
+google-cloud-storage>=2.10.0
+
+# Note: All infrastructure modules use stdlib only (no external deps needed)
+# - logging_config.py: stdlib logging + contextvars
+# - circuit_breaker.py: stdlib threading + dataclasses
+# - retry.py: stdlib time + asyncio
+# - rate_limiter.py: stdlib threading + time
+# - metrics.py: stdlib threading + dataclasses
+# - health.py: stdlib asyncio + dataclasses
+# - config.py: stdlib dataclasses (no pydantic needed)
+

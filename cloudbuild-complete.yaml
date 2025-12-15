@@ -1,0 +1,80 @@
+# ==============================================================================
+# GODBRAIN QUANTUM - Cloud Build with Artifact Registry
+# ==============================================================================
+
+steps:
+  # Build VOLTRAN image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/godbrain/voltran:latest'
+      - '-f'
+      - 'Dockerfile.voltran'
+      - '.'
+    id: 'build-voltran'
+
+  # Build Genetics image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/godbrain/genetics:latest'
+      - '-f'
+      - 'Dockerfile.genetics'
+      - '.'
+    id: 'build-genetics'
+
+  # Build Dashboard image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/godbrain/dashboard:latest'
+      - '-f'
+      - 'Dockerfile'
+      - '.'
+    id: 'build-dashboard'
+
+  # Build Market Feed image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/godbrain/market-feed:latest'
+      - '-f'
+      - 'Dockerfile.market-feed'
+      - '.'
+    id: 'build-market-feed'
+
+  # Push VOLTRAN
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/godbrain/voltran:latest']
+    waitFor: ['build-voltran']
+
+  # Push Genetics
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/godbrain/genetics:latest']
+    waitFor: ['build-genetics']
+
+  # Push Dashboard
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/godbrain/dashboard:latest']
+    waitFor: ['build-dashboard']
+
+  # Push Market Feed
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/godbrain/market-feed:latest']
+    waitFor: ['build-market-feed']
+
+images:
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/godbrain/voltran:latest'
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/godbrain/genetics:latest'
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/godbrain/dashboard:latest'
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/godbrain/market-feed:latest'
+
+options:
+  machineType: 'E2_HIGHCPU_8'
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: '1800s'
