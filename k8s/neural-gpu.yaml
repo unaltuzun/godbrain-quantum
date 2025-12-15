@@ -1,0 +1,85 @@
+# ==============================================================================
+# GODBRAIN Neural Training - GPU Deployment
+# ==============================================================================
+# Runs continuous neural network training on GPU
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: neural-trainer
+  namespace: godbrain
+  labels:
+    app: godbrain
+    component: neural-trainer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: godbrain
+      component: neural-trainer
+  template:
+    metadata:
+      labels:
+        app: godbrain
+        component: neural-trainer
+    spec:
+      # GPU Node selector
+      nodeSelector:
+        cloud.google.com/gke-accelerator: nvidia-tesla-t4
+      
+      # GPU Tolerations
+      tolerations:
+      - key: "nvidia.com/gpu"
+        operator: "Exists"
+        effect: "NoSchedule"
+      
+      containers:
+      - name: neural-trainer
+        image: us-central1-docker.pkg.dev/project-9ad1ce66-06b2-4a7f-bad/godbrain/dashboard:latest
+        command: ["python", "-m", "neural.trainer"]
+        env:
+        - name: REDIS_HOST
+          value: "redis.godbrain.svc.cluster.local"
+        - name: REDIS_PORT
+          value: "6379"
+        - name: REDIS_PASS
+          valueFrom:
+            secretKeyRef:
+              name: godbrain-secrets
+              key: REDIS_PASS
+        - name: CUDA_VISIBLE_DEVICES
+          value: "0"
+        - name: PYTORCH_CUDA_ALLOC_CONF
+          value: "max_split_size_mb:512"
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+            memory: "8Gi"
+            cpu: "2"
+          requests:
+            nvidia.com/gpu: 1
+            memory: "4Gi"
+            cpu: "1"
+        volumeMounts:
+        - name: model-storage
+          mountPath: /app/models
+      
+      volumes:
+      - name: model-storage
+        persistentVolumeClaim:
+          claimName: neural-models
+
+---
+# PVC for saving trained models
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: neural-models
+  namespace: godbrain
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: standard
