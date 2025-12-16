@@ -863,6 +863,36 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
             self.send_header('Content-type', 'application/json')
             self.end_headers()
             self.wfile.write(json.dumps(synthia_status).encode())
+        elif self.path == '/api/risk-status':
+            # Risk Manager status endpoint
+            try:
+                from core.risk_manager import get_risk_manager
+                rm = get_risk_manager()
+                status = rm.get_status()
+                self.send_response(200)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps(status).encode())
+            except Exception as e:
+                self.send_response(500)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": str(e)}).encode())
+        elif self.path == '/api/emergency-status':
+            # Emergency Shutdown status endpoint
+            try:
+                from core.emergency_shutdown import get_emergency_shutdown
+                es = get_emergency_shutdown()
+                status = es.get_status()
+                self.send_response(200)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps(status).encode())
+            except Exception as e:
+                self.send_response(500)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": str(e)}).encode())
 
     def do_POST(self):
         if self.path == '/api/chat':
@@ -893,6 +923,49 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_header('Content-type', 'application/json')
                 self.end_headers()
                 self.wfile.write(json.dumps({"error": f"Server error: {e}"}).encode())
+        elif self.path == '/api/emergency-shutdown':
+            # Emergency Shutdown trigger endpoint
+            try:
+                content_length = int(self.headers.get('Content-Length', 0))
+                reason = "Manual shutdown from Dashboard"
+                if content_length > 0:
+                    raw_data = self.rfile.read(content_length)
+                    d = json.loads(raw_data.decode('utf-8'))
+                    reason = d.get('reason', reason)
+                
+                from core.emergency_shutdown import get_emergency_shutdown, ShutdownType
+                es = get_emergency_shutdown()
+                result = es.trigger_shutdown(
+                    reason=reason,
+                    shutdown_type=ShutdownType.IMMEDIATE,
+                    triggered_by="dashboard",
+                )
+                
+                self.send_response(200)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps(result).encode())
+            except Exception as e:
+                self.send_response(500)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": str(e)}).encode())
+        elif self.path == '/api/resume-trading':
+            # Resume trading after shutdown
+            try:
+                from core.emergency_shutdown import get_emergency_shutdown
+                es = get_emergency_shutdown()
+                success = es.resume_system("Resumed from Dashboard")
+                
+                self.send_response(200)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": success}).encode())
+            except Exception as e:
+                self.send_response(500)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": str(e)}).encode())
         else:
             self.send_response(404)
             self.end_headers()
