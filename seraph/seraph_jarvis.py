@@ -163,6 +163,29 @@ class SeraphJarvis:
         if self._tools is None:
             self._tools = SeraphTools() if SeraphTools else None
         return self._tools
+    
+    @property
+    def news_collector(self):
+        """Lazy-load NewsCollector for crypto news."""
+        if not hasattr(self, '_news_collector'):
+            self._news_collector = None
+        if self._news_collector is None:
+            try:
+                from seraph.tools.news_collector import get_news_collector
+                self._news_collector = get_news_collector()
+            except Exception as e:
+                print(f"[SERAPH] News collector error: {e}")
+                self._news_collector = None
+        return self._news_collector
+    
+    def get_latest_news(self, limit: int = 10) -> str:
+        """Get latest crypto news headlines."""
+        if self.news_collector:
+            try:
+                return self.news_collector.get_latest_headlines(limit)
+            except Exception as e:
+                return f"Haber çekme hatası: {e}"
+        return "Haber kaynakları şu an kullanılamıyor."
 
     
     def _get_client(self):
@@ -246,6 +269,15 @@ class SeraphJarvis:
                     for r in rag_results:
                         rag_context += f"\n### {r.get('file', 'Unknown')}\n```python\n{r.get('content', '')[:500]}\n```\n"
                     system_prompt += rag_context
+            except Exception:
+                pass
+        
+        # Check if we need news context
+        if any(kw in user_message.lower() for kw in ["haber", "news", "piyasa", "market", "bitcoin", "btc", "eth", "crypto", "kripto"]):
+            try:
+                news_headlines = self.get_latest_news(5)
+                if news_headlines and "kullanılamıyor" not in news_headlines:
+                    system_prompt += f"\n\n## GÜNCEL KRİPTO HABERLERİ\n{news_headlines}\n"
             except Exception:
                 pass
         

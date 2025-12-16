@@ -192,6 +192,20 @@ class SeraphTools:
             dangerous=False
         ))
         
+        # News (God's Eyes)
+        self.register(Tool(
+            name="get_market_news",
+            description="Get latest crypto news headlines from God's Eyes (CoinDesk, etc.)",
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "limit": {"type": "integer", "description": "Number of headlines (default: 5)"}
+                }
+            },
+            handler=self._get_market_news,
+            dangerous=False
+        ))
+        
         # Dangerous operations (require confirmation)
         self.register(Tool(
             name="run_backtest",
@@ -411,10 +425,23 @@ class SeraphTools:
             return ToolResult(False, None, str(e))
     
     def _run_backtest(self, symbol: str = "DOGE/USDT", days: int = 30) -> ToolResult:
-        return ToolResult(True, {
-            "status": "queued",
-            "message": f"Backtest for {symbol} ({days} days) queued"
-        })
+        """Queue a backtest for the given symbol."""
+        try:
+            return ToolResult(True, {
+                "message": f"Backtest for {symbol} ({days} days) queued"
+            })
+        except Exception as e:
+            return ToolResult(False, None, str(e))
+
+    def _get_market_news(self, limit: int = 5) -> ToolResult:
+        try:
+            from .tools.news_collector import get_news_collector
+            collector = get_news_collector()
+            headlines = collector.get_latest_headlines(limit=limit)
+            return ToolResult(True, headlines)
+        except Exception as e:
+            return ToolResult(False, None, str(e))
+
 
 
 # Global instance
