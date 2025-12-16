@@ -1,0 +1,34 @@
+# ==============================================================================
+# GODBRAIN QUANTUM - Lightweight Dependencies (No PyTorch)
+# For Dashboard/Seraph - Saves ~2GB disk space
+# ==============================================================================
+
+# Core Trading
+ccxt==4.3.92
+python-dotenv==1.0.1
+requests>=2.31.0
+redis>=5.0.0
+
+# Data Science
+pandas>=2.0.0
+numpy>=1.24.0
+scipy>=1.10.0
+
+# Async & Networking
+aiohttp>=3.8.0
+websockets>=11.0
+
+# Visualization
+plotly>=5.18.0
+
+# AI & LLM (Seraph)
+anthropic>=0.18.0
+
+# Google Cloud (Memory Backup)
+google-cloud-storage>=2.10.0
+
+# News Collector (God's Eyes)
+feedparser>=6.0.10
+
+# Note: PyTorch excluded - Edge AI will be disabled
+# Use requirements.txt for full version with neural networks

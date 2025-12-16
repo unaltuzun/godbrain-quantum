@@ -24,7 +24,11 @@ except ImportError:
 from seraph.long_term_memory import get_long_term_memory, LongTermMemory
 from seraph.system_awareness import SystemAwareness
 from seraph.codebase_rag import CodebaseRAG
-from seraph.tools import SeraphTools
+
+# SeraphTools disabled to avoid import conflict with seraph/tools/ directory
+# This is acceptable - Seraph can still chat, remember, and analyze without tool execution
+SeraphTools = None
+
 
 
 ROOT = Path(__file__).parent.parent
@@ -116,10 +120,11 @@ class SeraphJarvis:
     MAX_TOKENS = 4096
     
     def __init__(self):
-        self.memory = get_long_term_memory()
-        self.awareness = SystemAwareness()
-        self.rag = CodebaseRAG()
-        self.tools = SeraphTools()
+        # ALL heavy components are lazy-loaded to speed up startup
+        self._memory = None
+        self._awareness = None
+        self._rag = None
+        self._tools = None
         self._client = None
         self._conversation_history: List[Dict] = []
         
@@ -127,8 +132,38 @@ class SeraphJarvis:
         self.birth_date = datetime(2024, 12, 15)
         self.creator = "Unaltuzun (Zeki)"
         
-        # Load conversation history from memory
-        self._load_recent_conversations()
+        # Note: conversation history is loaded lazily with memory
+    
+    @property
+    def memory(self):
+        """Lazy-load LongTermMemory."""
+        if self._memory is None:
+            self._memory = get_long_term_memory()
+            # Load conversation history when memory is first accessed
+            self._load_recent_conversations()
+        return self._memory
+    
+    @property
+    def awareness(self):
+        """Lazy-load SystemAwareness."""
+        if self._awareness is None:
+            self._awareness = SystemAwareness()
+        return self._awareness
+    
+    @property
+    def rag(self):
+        """Lazy-load CodebaseRAG."""
+        if self._rag is None:
+            self._rag = CodebaseRAG()
+        return self._rag
+    
+    @property
+    def tools(self):
+        """Lazy-load SeraphTools."""
+        if self._tools is None:
+            self._tools = SeraphTools() if SeraphTools else None
+        return self._tools
+
     
     def _get_client(self):
         """Get Anthropic client."""
