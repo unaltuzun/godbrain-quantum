@@ -49,6 +49,12 @@ services:
     restart: unless-stopped
     networks:
       - godbrain-network
+    healthcheck:
+      test: [ "CMD-SHELL", "ps aux | grep -v grep | grep -q 'python' || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   # ============================================================================
   # DASHBOARD - Web UI + Seraph AI
@@ -116,6 +122,12 @@ services:
     volumes:
       - ./logs:/app/logs
       - ./config:/app/config
+    healthcheck:
+      test: [ "CMD-SHELL", "ps aux | grep -v grep | grep -q 'python.*agg.py' || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
   # ============================================================================
   # GENETICS LABS - Blackjack/Roulette/Chaos Evolution
@@ -135,6 +147,12 @@ services:
     restart: unless-stopped
     networks:
       - godbrain-network
+    healthcheck:
+      test: [ "CMD-SHELL", "ps aux | grep -v grep | grep -q 'python' || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   # ============================================================================
   # SYNTHIA - Autonomous Healing System
@@ -156,10 +174,11 @@ services:
     networks:
       - godbrain-network
     healthcheck:
-      test: [ "CMD", "pgrep", "-f", "synthia_consciousness.py" ]
+      test: [ "CMD-SHELL", "ps aux | grep -v grep | grep -q 'synthia_consciousness.py' || exit 1" ]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 30s
 
   # ============================================================================
   # DNA PUSHER - Auto sync Lab DNA to Trading (24/7)
