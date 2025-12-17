@@ -893,6 +893,42 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_header('Content-type', 'application/json')
                 self.end_headers()
                 self.wfile.write(json.dumps({"error": str(e)}).encode())
+        elif self.path == '/api/llm-stats':
+            # LLM Router stats endpoint - shows provider usage and costs
+            try:
+                stats = {
+                    "available_providers": [],
+                    "costs": {"total_cost_usd": 0.0, "by_provider": {}},
+                    "seraph_stats": None
+                }
+                
+                # Try to get router stats
+                try:
+                    from infrastructure.llm_router import get_router
+                    router = get_router()
+                    router_stats = router.get_stats()
+                    stats["available_providers"] = router_stats.get("available_providers", [])
+                    stats["costs"] = router_stats.get("costs", {})
+                except Exception as e:
+                    stats["router_error"] = str(e)
+                
+                # Try to get Seraph LLM stats
+                try:
+                    seraph_jarvis = get_seraph_core()
+                    if seraph_jarvis and hasattr(seraph_jarvis, 'get_llm_stats'):
+                        stats["seraph_stats"] = seraph_jarvis.get_llm_stats()
+                except Exception as e:
+                    stats["seraph_error"] = str(e)
+                
+                self.send_response(200)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps(stats).encode())
+            except Exception as e:
+                self.send_response(500)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": str(e)}).encode())
 
     def do_POST(self):
         if self.path == '/api/chat':
