@@ -26,7 +26,7 @@ services:
     networks:
       - godbrain-network
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASS:-voltran2024}", "ping"]
+      test: [ "CMD", "redis-cli", "-a", "${REDIS_PASS:-voltran2024}", "ping" ]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -76,7 +76,7 @@ services:
     networks:
       - godbrain-network
     healthcheck:
-      test: ["CMD", "python", "-c", "import socket; s=socket.socket(); s.connect(('localhost', 8000)); s.close()"]
+      test: [ "CMD", "python", "-c", "import socket; s=socket.socket(); s.connect(('localhost', 8000)); s.close()" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -151,18 +151,41 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASS=${REDIS_PASS:-voltran2024}
-    command: ["python", "core/synthia_consciousness.py"]
+    command: [ "python", "core/synthia_consciousness.py" ]
     restart: unless-stopped
     networks:
       - godbrain-network
     healthcheck:
-      test: ["CMD", "pgrep", "-f", "synthia_consciousness.py"]
+      test: [ "CMD", "pgrep", "-f", "synthia_consciousness.py" ]
       interval: 30s
       timeout: 10s
       retries: 3
 
+  # ============================================================================
+  # DNA PUSHER - Auto sync Lab DNA to Trading (24/7)
+  # ============================================================================
+  dna-pusher:
+    build:
+      context: .
+      dockerfile: Dockerfile.genetics
+    container_name: godbrain-dna-pusher
+    depends_on:
+      redis:
+        condition: service_healthy
+      genetics:
+        condition: service_started
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASS=${REDIS_PASS:-voltran2024}
+    command: [ "python", "genetics/dna_pusher.py" ]
+    restart: unless-stopped
+    networks:
+      - godbrain-network
+
 volumes:
   redis-data:
+
 
 networks:
   godbrain-network:
