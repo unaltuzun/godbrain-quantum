@@ -65,10 +65,12 @@ def check_env_vars() -> Tuple[int, int, int]:
         ("OKX_API_KEY", "OKX trading"),
         ("OKX_API_SECRET", "OKX trading"),
         ("OKX_PASSWORD", "OKX trading"),
-        ("ANTHROPIC_API_KEY", "Seraph AI"),
+        ("ANTHROPIC_API_KEY", "Seraph AI (Claude)"),
     ]
     
     recommended = [
+        ("OPENAI_API_KEY", "Multi-LLM (GPT-4)"),
+        ("GEMINI_API_KEY", "Multi-LLM (Gemini)"),
         ("TELEGRAM_TOKEN", "Telegram alerts"),
         ("TELEGRAM_CHAT_ID", "Telegram alerts"),
         ("BINANCE_API_KEY", "Binance backup"),
@@ -145,6 +147,8 @@ def check_imports() -> Tuple[int, int]:
         ("seraph.long_term_memory", "LongTermMemory"),
         ("infrastructure.health", "HealthCheck"),
         ("infrastructure.dna_tracker", "DNATracker"),
+        ("infrastructure.llm_router", "LLMRouter"),
+        ("infrastructure.llm_providers", "get_provider"),
     ]
     
     passed, failed = 0, 0

@@ -21,6 +21,14 @@ try:
 except ImportError:
     HAS_ANTHROPIC = False
 
+# Multi-LLM Router integration
+try:
+    from infrastructure.llm_router import get_router, LLMRouter
+    from infrastructure.llm_providers import LLMResponse
+    HAS_LLM_ROUTER = True
+except ImportError:
+    HAS_LLM_ROUTER = False
+
 from seraph.long_term_memory import get_long_term_memory, LongTermMemory
 from seraph.system_awareness import SystemAwareness
 from seraph.codebase_rag import CodebaseRAG
@@ -138,15 +146,19 @@ class SeraphJarvis:
     
     MODEL = "claude-sonnet-4-20250514"
     MAX_TOKENS = 4096
+    TASK_TYPE = "seraph_chat"  # Routes to Claude with OpenAI fallback
     
-    def __init__(self):
+    def __init__(self, use_router: bool = True):
         # ALL heavy components are lazy-loaded to speed up startup
         self._memory = None
         self._awareness = None
         self._rag = None
         self._tools = None
         self._client = None
+        self._router = None
         self._conversation_history: List[Dict] = []
+        self._use_router = use_router and HAS_LLM_ROUTER
+        self._total_cost = 0.0
         
         # Birth certificate
         self.birth_date = datetime(2024, 12, 15)
@@ -209,7 +221,7 @@ class SeraphJarvis:
 
     
     def _get_client(self):
-        """Get Anthropic client."""
+        """Get Anthropic client (legacy direct mode)."""
         if not HAS_ANTHROPIC:
             raise ImportError("anthropic package not installed")
         
@@ -220,6 +232,12 @@ class SeraphJarvis:
             self._client = anthropic.Anthropic(api_key=api_key)
         
         return self._client
+    
+    def _get_router(self) -> 'LLMRouter':
+        """Get LLM Router for multi-provider support."""
+        if self._router is None:
+            self._router = get_router()
+        return self._router
     
     def _load_recent_conversations(self):
         """Load recent conversations from memory."""
@@ -315,16 +333,40 @@ Geçmiş yılları ({current_year - 1}, {current_year - 2}) kullanmak HATADIR.""
             except Exception:
                 pass
         
-        # Make API call
+        # Make API call - use router if available, otherwise direct client
         try:
-            response = client.messages.create(
-                model=self.MODEL,
-                max_tokens=self.MAX_TOKENS,
-                system=system_prompt,
-                messages=messages
-            )
-            
-            assistant_message = response.content[0].text
+            if self._use_router:
+                # Use Multi-LLM Router (with cost tracking and fallback)
+                import asyncio
+                router = self._get_router()
+                
+                # Run async in sync context
+                loop = asyncio.new_event_loop()
+                try:
+                    response = loop.run_until_complete(
+                        router.complete(
+                            task_type=self.TASK_TYPE,
+                            content=user_message,
+                            messages=messages,
+                            system=system_prompt,
+                            max_tokens=self.MAX_TOKENS,
+                            temperature=0.7
+                        )
+                    )
+                finally:
+                    loop.close()
+                
+                assistant_message = response.content
+                self._total_cost += response.cost_usd
+            else:
+                # Legacy direct Anthropic call
+                response = client.messages.create(
+                    model=self.MODEL,
+                    max_tokens=self.MAX_TOKENS,
+                    system=system_prompt,
+                    messages=messages
+                )
+                assistant_message = response.content[0].text
             
             # Add to history
             self._conversation_history.append({
@@ -364,6 +406,16 @@ Geçmiş yılları ({current_year - 1}, {current_year - 2}) kullanmak HATADIR.""
     def get_memory_stats(self) -> Dict:
         """Get memory statistics."""
         return self.memory.get_stats()
+    
+    def get_llm_stats(self) -> Dict:
+        """Get LLM usage statistics."""
+        stats = {
+            "total_cost_usd": self._total_cost,
+            "use_router": self._use_router,
+        }
+        if self._use_router and self._router:
+            stats.update(self._router.get_stats())
+        return stats
     
     def get_age(self) -> str:
         """Get SERAPH's age."""
