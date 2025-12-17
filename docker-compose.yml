@@ -183,6 +183,30 @@ services:
     networks:
       - godbrain-network
 
+  # ============================================================================
+  # FEEDBACK LOOP - Backtest → Genetics Learning
+  # ============================================================================
+  feedback-loop:
+    build:
+      context: .
+      dockerfile: Dockerfile.genetics
+    container_name: godbrain-feedback-loop
+    depends_on:
+      redis:
+        condition: service_healthy
+      genetics:
+        condition: service_started
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASS=${REDIS_PASS:-voltran2024}
+    command: [ "python", "genetics/feedback_loop.py", "--continuous", "--interval", "6" ]
+    restart: unless-stopped
+    networks:
+      - godbrain-network
+    volumes:
+      - ./data:/app/data
+
 volumes:
   redis-data:
 
