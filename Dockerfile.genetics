@@ -1,6 +1,6 @@
 # ==============================================================================
-# GODBRAIN GENETICS LABS
-# Runs: Blackjack, Roulette, Chaos Labs in parallel
+# GODBRAIN GENETICS LABS + BACKTESTING
+# Runs: Blackjack, Roulette, Chaos Labs, DNA Pusher, Feedback Loop
 # ==============================================================================
 FROM python:3.11-slim
 
@@ -8,10 +8,14 @@ WORKDIR /app
 
 # Copy requirements first for caching
 COPY requirements.txt .
-RUN pip install --no-cache-dir redis python-dotenv
+RUN pip install --no-cache-dir redis python-dotenv pandas numpy ccxt pyarrow scipy
 
-# Copy genetics modules
+# Copy genetics and backtesting modules
 COPY genetics/ ./genetics/
+COPY backtesting/ ./backtesting/
+
+# Create data directories
+RUN mkdir -p data/historical reports/backtest_results
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
@@ -19,4 +23,3 @@ ENV PYTHONPATH=/app
 
 # Run all genetics labs
 CMD ["python", "genetics/run_all_labs.py"]
-
