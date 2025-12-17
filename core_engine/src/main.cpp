@@ -14,7 +14,6 @@
 #include <iostream>
 #include <thread>
 
-
 #include "godbrain/godbrain.hpp"
 
 using namespace godbrain;
@@ -80,8 +79,8 @@ void benchmark_queue() {
     tick.bid = to_price_micro(0.32);
     tick.ask = to_price_micro(0.321);
     tick.sequence = i;
-    queue.push(tick);
-    queue.pop();
+    (void)queue.push(tick);
+    (void)queue.pop();
   }
 
   auto end = std::chrono::high_resolution_clock::now();

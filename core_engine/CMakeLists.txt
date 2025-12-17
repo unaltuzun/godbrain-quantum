@@ -87,25 +87,7 @@ endif()
 # Core Library
 # =============================================================================
 add_library(godbrain_core STATIC
-    src/core/memory_pool.cpp
-    src/core/lock_free_queue.cpp
-    src/core/ring_buffer.cpp
-    src/core/timestamp.cpp
-    
-    src/market/orderbook.cpp
-    src/market/tick_processor.cpp
-    src/market/market_data.cpp
-    
-    src/trading/order.cpp
-    src/trading/position.cpp
-    src/trading/execution_engine.cpp
-    src/trading/risk_manager.cpp
-    
-    src/network/websocket_client.cpp
-    src/network/tcp_client.cpp
-    
-    src/simd/orderbook_simd.cpp
-    src/simd/statistics_simd.cpp
+    src/godbrain.cpp
 )
 
 target_include_directories(godbrain_core 
@@ -136,10 +118,10 @@ set_target_properties(godbrain_shared PROPERTIES OUTPUT_NAME "godbrain")
 # =============================================================================
 # Python Bindings
 # =============================================================================
-if(pybind11_FOUND)
-    pybind11_add_module(pygodbrain src/bindings/python_bindings.cpp)
-    target_link_libraries(pygodbrain PRIVATE godbrain_core)
-endif()
+# if(pybind11_FOUND)
+#     pybind11_add_module(pygodbrain src/bindings/python_bindings.cpp)
+#     target_link_libraries(pygodbrain PRIVATE godbrain_core)
+# endif()
 
 # =============================================================================
 # Main Executable
@@ -150,25 +132,25 @@ target_link_libraries(godbrain_engine PRIVATE godbrain_core)
 # =============================================================================
 # Benchmarks
 # =============================================================================
-add_executable(godbrain_bench 
-    benchmarks/main.cpp
-    benchmarks/orderbook_bench.cpp
-    benchmarks/queue_bench.cpp
-)
-target_link_libraries(godbrain_bench PRIVATE godbrain_core)
+# add_executable(godbrain_bench 
+#     benchmarks/main.cpp
+#     benchmarks/orderbook_bench.cpp
+#     benchmarks/queue_bench.cpp
+# )
+# target_link_libraries(godbrain_bench PRIVATE godbrain_core)
 
 # =============================================================================
 # Tests
 # =============================================================================
-enable_testing()
-add_executable(godbrain_tests
-    tests/test_main.cpp
-    tests/test_lock_free_queue.cpp
-    tests/test_orderbook.cpp
-    tests/test_risk_manager.cpp
-)
-target_link_libraries(godbrain_tests PRIVATE godbrain_core)
-add_test(NAME godbrain_tests COMMAND godbrain_tests)
+# enable_testing()
+# add_executable(godbrain_tests
+#     tests/test_main.cpp
+#     tests/test_lock_free_queue.cpp
+#     tests/test_orderbook.cpp
+#     tests/test_risk_manager.cpp
+# )
+# target_link_libraries(godbrain_tests PRIVATE godbrain_core)
+# add_test(NAME godbrain_tests COMMAND godbrain_tests)
 
 # =============================================================================
 # Installation

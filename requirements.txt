@@ -44,6 +44,8 @@ anthropic>=0.18.0
 
 # Google Cloud
 google-cloud-storage>=2.10.0
+feedparser>=6.0.10
+
 
 # Note: All infrastructure modules use stdlib only (no external deps needed)
 # - logging_config.py: stdlib logging + contextvars

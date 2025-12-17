@@ -1,0 +1,12 @@
+CompileFlags:
+  Add:
+    - "-std=c++20"
+    - "-I"
+    - "core_engine/include"
+    - "-DGODBRAIN_AVX2"
+  Compiler: clang++
+
+Diagnostics:
+  ClangTidy:
+    Remove:
+      - misc-include-cleaner

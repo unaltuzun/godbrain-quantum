@@ -19,11 +19,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Build C++ Core
-WORKDIR /app/core_engine
-RUN mkdir -p build && cd build && \
-    cmake .. -DCMAKE_BUILD_TYPE=Release && \
-    make -j$(nproc)
+# C++ Core skipped for Dashboard (only needed for Voltran)
+# WORKDIR /app/core_engine
+# ...
 
 # Return to app root
 WORKDIR /app

@@ -1,0 +1,37 @@
+{
+  "patterns": [
+    {
+      "pattern_id": "e2a0c1ac73c6",
+      "error_type": "syntax_error",
+      "message_pattern": "BOM error",
+      "file_pattern": "*.py",
+      "fix_action": null,
+      "occurrences": 1,
+      "fixes_applied": 0,
+      "success_rate": 0.0,
+      "first_seen": "2025-12-16T21:05:35.660883",
+      "last_seen": "2025-12-16T21:05:35.660896"
+    }
+  ],
+  "recent_issues": [
+    {
+      "type": "syntax_error",
+      "file": "test.py",
+      "message": "BOM error",
+      "pattern_id": "e2a0c1ac73c6",
+      "remembered_at": "2025-12-16T21:05:35.661506"
+    }
+  ],
+  "fix_records": [],
+  "stats": {
+    "total_scans": 1,
+    "total_issues_found": 1,
+    "total_fixes_applied": 0,
+    "total_fixes_successful": 0,
+    "patterns_learned": 1,
+    "uptime_hours": 1.041111111111111e-06,
+    "start_time": "2025-12-16T21:05:35.657796",
+    "last_evolution": "2025-12-16T21:05:35.661534"
+  },
+  "last_saved": "2025-12-16T21:05:35.661644"
+}

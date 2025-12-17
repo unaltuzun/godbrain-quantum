@@ -1,4 +1,4 @@
-﻿import sys
+import sys
 
 print("----------------------------------------------------------------")
 print("GODBRAIN QUANTUM: POST-HEDGE REPORT")

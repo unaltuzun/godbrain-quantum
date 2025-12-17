@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 SERAPH MEMORY TEST - Run this before deploying to verify memory system works
 

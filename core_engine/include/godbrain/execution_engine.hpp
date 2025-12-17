@@ -20,7 +20,6 @@
 #include <unordered_map>
 #include <vector>
 
-
 namespace godbrain {
 
 // =============================================================================
@@ -201,7 +200,7 @@ public:
    * @brief Get position for symbol
    */
   [[nodiscard]] const Position *get_position(Symbol symbol) const {
-    auto it = positions_.find(symbol.view());
+    auto it = positions_.find(std::string(symbol.view()));
     return it != positions_.end() ? &it->second : nullptr;
   }
 
@@ -209,7 +208,7 @@ public:
    * @brief Close position for symbol
    */
   bool close_position(Symbol symbol) {
-    auto it = positions_.find(symbol.view());
+    auto it = positions_.find(std::string(symbol.view()));
     if (it == positions_.end() || it->second.is_flat()) {
       return false;
     }
@@ -218,7 +217,7 @@ public:
     const Side close_side = pos.is_long() ? Side::SELL : Side::BUY;
     const QuantityNano qty = std::abs(pos.quantity);
 
-    submit_order(symbol, close_side, OrderType::MARKET, qty);
+    (void)submit_order(symbol, close_side, OrderType::MARKET, qty);
     return true;
   }
 
@@ -244,14 +243,14 @@ public:
    * @brief Update orderbook
    */
   void update_orderbook(Symbol symbol, const Orderbook &book) {
-    orderbooks_[symbol.view()] = book;
+    orderbooks_[std::string(symbol.view())] = book;
   }
 
   /**
    * @brief Get orderbook
    */
   [[nodiscard]] const Orderbook *get_orderbook(Symbol symbol) const {
-    auto it = orderbooks_.find(symbol.view());
+    auto it = orderbooks_.find(std::string(symbol.view()));
     return it != orderbooks_.end() ? &it->second : nullptr;
   }
 
@@ -295,8 +294,8 @@ private:
                                     : pos->quantity - quantity;
     }
 
-    const double notional =
-        from_quantity_nano(std::abs(new_qty)) * get_current_price(symbol);
+    const double notional = from_quantity_nano(std::abs(new_qty)) *
+                            from_price_micro(get_current_price(symbol));
     const double equity_pct = notional / from_price_micro(equity_);
 
     return equity_pct <= risk_params_.max_position_size;
@@ -340,7 +339,7 @@ private:
   void update_position(Symbol symbol, Side side, QuantityNano qty,
                        PriceMicro price) {
     std::string_view sym = symbol.view();
-    auto it = positions_.find(sym);
+    auto it = positions_.find(std::string(sym));
 
     if (it == positions_.end()) {
       // New position

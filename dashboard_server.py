@@ -1,4 +1,4 @@
-﻿import http.server
+import http.server
 import socketserver
 import json
 import socket
