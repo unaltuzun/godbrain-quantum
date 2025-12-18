@@ -155,13 +155,13 @@ services:
       start_period: 30s
 
   # ============================================================================
-  # SYNTHIA - Autonomous Healing System
+  # SENTINEL v2 - Autonomous System Guardian (Docker Auto-Healing)
   # ============================================================================
-  synthia:
+  sentinel:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: godbrain-synthia
+    container_name: godbrain-sentinel
     depends_on:
       redis:
         condition: service_healthy
@@ -169,12 +169,14 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASS=${REDIS_PASS:-voltran2024}
-    command: [ "python", "core/synthia_consciousness.py" ]
+    command: [ "python", "core/sentinel_v2.py" ]
     restart: unless-stopped
     networks:
       - godbrain-network
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     healthcheck:
-      test: [ "CMD-SHELL", "ps aux | grep -v grep | grep -q 'synthia_consciousness.py' || exit 1" ]
+      test: [ "CMD-SHELL", "ps aux | grep -v grep | grep -q 'sentinel_v2.py' || exit 1" ]
       interval: 30s
       timeout: 10s
       retries: 3
