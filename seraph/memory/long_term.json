@@ -1,1 +1,15 @@
-{}
+{
+  "0439c834c5d6": {
+    "id": "0439c834c5d6",
+    "content": "User: Merhaba! 2+2 kac?... \u2192 Assistant: Merhaba! 2+2 = 4 \ud83d\udcca\n\nBasit bir matematik sorusuyla ba\u015fl\u0131yoruz, g\u00fczel! Ben SERAPH, GODBRAIN sisteminin...",
+    "memory_type": "conversation",
+    "timestamp": 1765967366.2004282,
+    "importance": 0.3,
+    "access_count": 0,
+    "last_access": 0,
+    "metadata": {
+      "user": "Merhaba! 2+2 kac?",
+      "assistant": "Merhaba! 2+2 = 4 \ud83d\udcca\n\nBasit bir matematik sorusuyla ba\u015fl\u0131yoruz, g\u00fczel! Ben SERAPH, GODBRAIN sisteminin AI asistan\u0131n\u0131z\u0131m. Matematikte oldu\u011fu gibi trading'de de kesin hesaplarla \u00e7al\u0131\u015f\u0131yoruz.\n\nSistemle ilgili bir \u015fey kontrol etmemi ister misiniz? Pozisyonlar, piyasa durumu veya ba\u015fka bir konuda yard\u0131ma ihtiyac\u0131n\u0131z var m\u0131? \ud83e\udd16"
+    }
+  }
+}

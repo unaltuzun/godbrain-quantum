@@ -50,7 +50,7 @@ services:
     networks:
       - godbrain-network
     healthcheck:
-      test: [ "CMD-SHELL", "ps aux | grep -v grep | grep -q 'python' || exit 1" ]
+      test: [ "CMD", "python", "-c", "import os; import signal; import sys; [os.kill(int(p), 0) for p in os.listdir('/proc') if p.isdigit() and 'python' in open(f'/proc/{p}/cmdline').read()] or sys.exit(1)" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -123,7 +123,7 @@ services:
       - ./logs:/app/logs
       - ./config:/app/config
     healthcheck:
-      test: [ "CMD-SHELL", "ps aux | grep -v grep | grep -q 'python.*agg.py' || exit 1" ]
+      test: [ "CMD", "python", "-c", "import os; import sys; [os.kill(int(p), 0) for p in os.listdir('/proc') if p.isdigit() and 'agg.py' in open(f'/proc/{p}/cmdline').read()] or sys.exit(1)" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -148,7 +148,7 @@ services:
     networks:
       - godbrain-network
     healthcheck:
-      test: [ "CMD-SHELL", "ps aux | grep -v grep | grep -q 'python' || exit 1" ]
+      test: [ "CMD", "python", "-c", "import os; import sys; [os.kill(int(p), 0) for p in os.listdir('/proc') if p.isdigit() and 'python' in open(f'/proc/{p}/cmdline').read()] or sys.exit(1)" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -169,14 +169,14 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASS=${REDIS_PASS:-voltran2024}
-    command: [ "python", "core/sentinel_v2.py" ]
+    command: [ "python", "-u", "core/sentinel_v2.py" ]
     restart: unless-stopped
     networks:
       - godbrain-network
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     healthcheck:
-      test: [ "CMD-SHELL", "ps aux | grep -v grep | grep -q 'sentinel_v2.py' || exit 1" ]
+      test: [ "CMD", "python", "-c", "import os; import sys; [os.kill(int(p), 0) for p in os.listdir('/proc') if p.isdigit() and 'sentinel_v2.py' in open(f'/proc/{p}/cmdline').read()] or sys.exit(1)" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -226,6 +226,64 @@ services:
     networks:
       - godbrain-network
     volumes:
+      - ./data:/app/data
+
+  # ============================================================================
+  # QUANTUM LAB - Multiverse Evolution Engine (Physics Lab)
+  # ============================================================================
+  quantum-lab:
+    build:
+      context: .
+      dockerfile: Dockerfile.genetics
+    container_name: godbrain-quantum-lab
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASS=${REDIS_PASS:-voltran2024}
+      - PYTHONIOENCODING=utf-8
+    command: [ "python", "quantum_lab/quantum_daemon.py" ]
+    restart: unless-stopped
+    networks:
+      - godbrain-network
+    volumes:
+      - ./quantum_lab:/app/quantum_lab
+      - ./data:/app/data
+    healthcheck:
+      test: [ "CMD", "python", "-c", "import os; exit(0)" ]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ============================================================================
+  # ANOMALY HUNTER - Nobel-worthy Discovery Detection
+  # ============================================================================
+  anomaly-hunter:
+    build:
+      context: .
+      dockerfile: Dockerfile.genetics
+    container_name: godbrain-anomaly-hunter
+    depends_on:
+      redis:
+        condition: service_healthy
+      quantum-lab:
+        condition: service_started
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASS=${REDIS_PASS:-voltran2024}
+      - PYTHONIOENCODING=utf-8
+    command: [ "python", "-m", "anomaly_hunter.hunter", "--monitor" ]
+    restart: unless-stopped
+    networks:
+      - godbrain-network
+    volumes:
+      - ./anomaly_hunter:/app/anomaly_hunter
+      - ./discoveries:/app/discoveries
+      - ./quantum_lab:/app/quantum_lab
       - ./data:/app/data
 
 volumes:

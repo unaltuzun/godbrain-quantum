@@ -12,10 +12,10 @@ import random
 from pathlib import Path
 from datetime import datetime
 
-sys.path.insert(0, '/mnt/c/godbrain-quantum')
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
-# Paths
-ROOT = Path("/mnt/c/godbrain-quantum")
+# Paths - auto-detect from script location
+ROOT = Path(__file__).parent.parent
 UNIVERSE_DIR = ROOT / "quantum_lab" / "universes"
 WISDOM_DIR = ROOT / "quantum_lab" / "wisdom"
 CONVERGENCE_DIR = ROOT / "quantum_lab" / "convergence"
@@ -25,11 +25,12 @@ LOG_FILE = ROOT / "logs" / "quantum_lab.log"
 UNIVERSE_DIR.mkdir(parents=True, exist_ok=True)
 WISDOM_DIR.mkdir(parents=True, exist_ok=True)
 CONVERGENCE_DIR.mkdir(parents=True, exist_ok=True)
+(ROOT / "logs").mkdir(parents=True, exist_ok=True)
 
 def log(msg):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     print(f"[QUANTUM] {timestamp} | {msg}")
-    with open(LOG_FILE, 'a') as f:
+    with open(LOG_FILE, 'a', encoding='utf-8') as f:
         f.write(f"{timestamp} | {msg}\n")
 
 class UniverseSimulator:
@@ -164,11 +165,59 @@ class UniverseSimulator:
 class MultiverseEngine:
     """Çoklu evren simülasyon motoru"""
     
+    STATE_FILE = WISDOM_DIR / "engine_state.json"
+    
     def __init__(self):
         self.universes = {}
         self.regimes = ["BULL", "BEAR", "NEUTRAL", "CRASH", "EUPHORIA", "SIDEWAYS"]
         self.global_wisdom = []
         self.total_generations = 0
+        self.epoch = 0
+    
+    def save_state(self):
+        """Persist engine state for recovery"""
+        state = {
+            "epoch": self.epoch,
+            "total_generations": self.total_generations,
+            "timestamp": datetime.now().isoformat(),
+            "universes": {}
+        }
+        for uid, universe in self.universes.items():
+            state["universes"][str(uid)] = {
+                "regime": universe.regime,
+                "generation": universe.generation,
+                "best_fitness": universe.best_fitness,
+                "champion": universe.champion,
+                "genomes": universe.genomes[:10]  # Top 10 genomes
+            }
+        try:
+            with open(self.STATE_FILE, 'w') as f:
+                json.dump(state, f, indent=2)
+        except Exception as e:
+            log(f"⚠️ Failed to save state: {e}")
+    
+    def load_state(self) -> bool:
+        """Load previous state for recovery"""
+        if not self.STATE_FILE.exists():
+            return False
+        try:
+            with open(self.STATE_FILE) as f:
+                state = json.load(f)
+            self.epoch = state.get("epoch", 0)
+            self.total_generations = state.get("total_generations", 0)
+            log(f"🔄 Recovering from epoch {self.epoch}, total generations: {self.total_generations}")
+            
+            for uid_str, udata in state.get("universes", {}).items():
+                uid = int(uid_str)
+                if uid in self.universes:
+                    self.universes[uid].generation = udata.get("generation", 0)
+                    self.universes[uid].best_fitness = udata.get("best_fitness", 0)
+                    self.universes[uid].champion = udata.get("champion")
+                    self.universes[uid].genomes = udata.get("genomes", [])
+            return True
+        except Exception as e:
+            log(f"⚠️ Failed to load state: {e}")
+            return False
         
     def create_multiverse(self, num_universes: int = 6):
         """Paralel evrenler oluştur"""
@@ -283,7 +332,14 @@ def main():
     engine = MultiverseEngine()
     engine.create_multiverse(6)
     
-    epoch = 0
+    # Try to recover from previous state
+    recovered = engine.load_state()
+    if recovered:
+        log(f"✅ Resumed from epoch {engine.epoch}")
+    else:
+        log("🆕 Starting fresh - no previous state found")
+    
+    epoch = engine.epoch
     wisdom_interval = 10  # Her 10 epoch'ta wisdom çıkar
     
     while True:
@@ -298,6 +354,9 @@ def main():
             for uid, res in results.items():
                 log(f"  Universe-{uid} ({res['regime']}): Gen {res['generation']} | Champion: {res['champion_id']} | Fitness: {res['fitness']:.1f}")
             
+            # Update engine epoch for state persistence
+            engine.epoch = epoch
+            
             # Wisdom çıkar ve uygula
             if epoch % wisdom_interval == 0:
                 log("📚 Extracting multiverse wisdom...")
@@ -309,6 +368,9 @@ def main():
                     
                     # Canlı sisteme uygula
                     engine.apply_wisdom_to_live(wisdom)
+                
+                # Save state for recovery
+                engine.save_state()
             
             # Sonraki epoch için bekle
             time.sleep(30)  # 30 saniye aralıkla evrim

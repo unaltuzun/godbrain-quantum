@@ -1,14 +1,14 @@
 {
-  "timestamp": "2025-12-14T00:35:47.949372",
+  "timestamp": "2025-12-18T18:40:03.494605",
   "params": {
-    "stop_loss_pct": -2.9972812787219696,
-    "take_profit_pct": 11.236635489462927,
-    "rsi_buy_level": 25.587603431987972,
-    "rsi_sell_level": 74.16234687275242,
-    "position_size_factor": 0.5225668712162415
+    "stop_loss_pct": -2.2017459343383985,
+    "take_profit_pct": 11.67022389214224,
+    "rsi_buy_level": 26.697588756131566,
+    "rsi_sell_level": 67.51948276130462,
+    "position_size_factor": 0.45705856314184556
   },
-  "generation": 190,
+  "generation": 230,
   "source": "QUANTUM_MULTIVERSE",
-  "champion_id": "g97228",
+  "champion_id": "g34785",
   "champion_fitness": 100
 }

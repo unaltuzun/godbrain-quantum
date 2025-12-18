@@ -1,34 +1,16 @@
 {
-  "timestamp": "2025-12-16T22:27:42.011568",
-  "generation": 25,
-  "total_genomes": 1136,
-  "alive_genomes": 1001,
-  "pareto_front_size": 5,
-  "max_lineage_depth": 26,
-  "avg_f_stab": 0.05829921415595096,
-  "avg_f_energy": 0.07749754654207221,
-  "noise_robustness": 0.8051948051948052,
-  "suggested_dd_tolerance": 0.42207792207792216,
-  "regime_stability": 0.941700785844049,
+  "timestamp": "2025-12-17T03:30:10.168010",
+  "generation": 228,
+  "total_genomes": 5196,
+  "alive_genomes": 4797,
+  "pareto_front_size": 4,
+  "max_lineage_depth": 110,
+  "avg_f_stab": 0.05542690955000661,
+  "avg_f_energy": 0.08048069638430419,
+  "noise_robustness": 0.8065457577652699,
+  "suggested_dd_tolerance": 0.42261830310610804,
+  "regime_stability": 0.9445730904499934,
   "pareto_front": [
-    {
-      "genome_id": "5d30cb92",
-      "f_stab": 0.011566406010423816,
-      "f_energy": 0.049951366924777925,
-      "lineage_depth": 1
-    },
-    {
-      "genome_id": "141dd9cf",
-      "f_stab": 0.00925101020347763,
-      "f_energy": 0.05191933012653179,
-      "lineage_depth": 2
-    },
-    {
-      "genome_id": "2263aa1e",
-      "f_stab": 0.035686607117631185,
-      "f_energy": 0.047455293633305896,
-      "lineage_depth": 5
-    },
     {
       "genome_id": "c2439432",
       "f_stab": 0.021974402316221057,
@@ -36,10 +18,22 @@
       "lineage_depth": 10
     },
     {
-      "genome_id": "f065615b",
-      "f_stab": 0.01985187435599273,
-      "f_energy": 0.04914551697184695,
-      "lineage_depth": 9
+      "genome_id": "cbd2a48f",
+      "f_stab": 0.005561383905055441,
+      "f_energy": 0.10467062451720545,
+      "lineage_depth": 82
+    },
+    {
+      "genome_id": "b331be06",
+      "f_stab": 0.026803330789613163,
+      "f_energy": 0.047280648476410864,
+      "lineage_depth": 57
+    },
+    {
+      "genome_id": "3c955831",
+      "f_stab": 0.0062954475714683605,
+      "f_energy": 0.04827952535397135,
+      "lineage_depth": 71
     }
   ]
 }

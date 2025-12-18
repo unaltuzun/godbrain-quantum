@@ -21,7 +21,7 @@ import os
 import sys
 import json
 import time
-import subprocess
+import docker
 import redis
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
@@ -93,39 +93,34 @@ class Sentinel:
         """Get status of all Docker services."""
         result = {}
         try:
-            # Get container list
-            output = subprocess.check_output(
-                ["docker", "ps", "-a", "--format", "{{.Names}}|{{.Status}}|{{.State}}"],
-                text=True,
-                timeout=10
-            )
+            client = docker.from_env()
+            containers = client.containers.list(all=True)
             
-            for line in output.strip().split("\n"):
-                if not line:
-                    continue
-                parts = line.split("|")
-                if len(parts) >= 3:
-                    name, status, state = parts[0], parts[1], parts[2]
-                    
-                    # Determine health
-                    if "healthy" in status.lower():
-                        health = "healthy"
-                    elif "unhealthy" in status.lower():
-                        health = "unhealthy"
-                    elif "starting" in status.lower():
-                        health = "starting"
-                    elif state == "running":
-                        health = "running"
-                    elif state == "exited":
-                        health = "stopped"
-                    else:
-                        health = state
-                    
-                    result[name] = {
-                        "status": status,
-                        "state": state,
-                        "health": health
-                    }
+            for container in containers:
+                name = container.name
+                state = container.status  # e.g., 'running', 'exited'
+                status_str = container.attrs.get('State', {}).get('Status', '')
+                health = container.attrs.get('State', {}).get('Health', {}).get('Status', 'unknown')
+                
+                # Normalize health
+                if health == 'healthy':
+                    norm_health = 'healthy'
+                elif health == 'unhealthy':
+                    norm_health = 'unhealthy'
+                elif health == 'starting':
+                    norm_health = 'starting'
+                elif state == 'running':
+                    norm_health = 'running'
+                elif state == 'exited':
+                    norm_health = 'stopped'
+                else:
+                    norm_health = state
+                
+                result[name] = {
+                    "status": f"{state} ({health})",
+                    "state": state,
+                    "health": norm_health
+                }
         except Exception as e:
             self.log(f"Failed to get Docker status: {e}", "ERROR")
         
@@ -142,12 +137,10 @@ class Sentinel:
             
             self.log(f"Restarting {service_name}...", "ACTION")
             
-            # Try docker restart
-            subprocess.run(
-                ["docker", "restart", service_name],
-                timeout=60,
-                capture_output=True
-            )
+            # Try docker restart via SDK
+            client = docker.from_env()
+            container = client.containers.get(service_name)
+            container.restart()
             
             self.restart_counts[service_name] = count + 1
             time.sleep(5)
