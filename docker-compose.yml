@@ -81,6 +81,10 @@ services:
     restart: unless-stopped
     networks:
       - godbrain-network
+    volumes:
+      - ./seraph:/app/seraph
+      - ./quantum_lab/wisdom:/app/quantum_lab/wisdom
+      - ./discoveries:/app/discoveries
     healthcheck:
       test: [ "CMD", "python", "-c", "import socket; s=socket.socket(); s.connect(('localhost', 8000)); s.close()" ]
       interval: 30s
@@ -284,6 +288,31 @@ services:
       - ./anomaly_hunter:/app/anomaly_hunter
       - ./discoveries:/app/discoveries
       - ./quantum_lab:/app/quantum_lab
+      - ./data:/app/data
+
+  # ============================================================================
+  # QUANTUM GENESIS - IBM Quantum Evolution Lab
+  # ============================================================================
+  quantum-genesis:
+    build:
+      context: .
+      dockerfile: Dockerfile.genetics
+    container_name: godbrain-quantum-genesis
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASS=${REDIS_PASS:-voltran2024}
+      - IBM_QUANTUM_TOKEN=${IBM_QUANTUM_TOKEN}
+      - PYTHONIOENCODING=utf-8
+    command: [ "python", "-m", "quantum_genesis.genesis_daemon", "--simulator", "--epochs", "0" ]
+    restart: unless-stopped
+    networks:
+      - godbrain-network
+    volumes:
+      - ./quantum_genesis:/app/quantum_genesis
       - ./data:/app/data
 
 volumes:

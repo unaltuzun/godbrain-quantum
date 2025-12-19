@@ -1,0 +1,61 @@
+{
+  "source": "quantum_genesis",
+  "timestamp": "2025-12-19T14:06:53.585782",
+  "total_anomalies": 3,
+  "alpha_anomaly": {
+    "id": "QA_DNA_ac388a20_20251219140553",
+    "genome_id": "DNA_ac388a20",
+    "generation": 20,
+    "fitness": 0.615234375,
+    "dna_sequence": "GTGGTTC",
+    "bitstring_seed": "10011010010111",
+    "signal_modifier": 0.14285714285714285,
+    "confidence": 0.615234375,
+    "source": "quantum_genesis",
+    "timestamp": "2025-12-19T14:05:53.444904"
+  },
+  "signal": {
+    "direction": "long",
+    "strength": 0.14285714285714285,
+    "confidence": 0.615234375,
+    "source": "quantum_evolution"
+  },
+  "recent_anomalies": [
+    {
+      "id": "QA_DNA_2ab8f12e_20251219140453",
+      "genome_id": "DNA_2ab8f12e",
+      "generation": 11,
+      "fitness": 0.5361328125,
+      "dna_sequence": "GGTGTCTTC",
+      "bitstring_seed": "101001100111010111",
+      "signal_modifier": 0.2222222222222222,
+      "confidence": 0.5361328125,
+      "source": "quantum_genesis",
+      "timestamp": "2025-12-19T14:04:53.012231"
+    },
+    {
+      "id": "QA_DNA_ac388a20_20251219140553",
+      "genome_id": "DNA_ac388a20",
+      "generation": 20,
+      "fitness": 0.615234375,
+      "dna_sequence": "GTGGTTC",
+      "bitstring_seed": "10011010010111",
+      "signal_modifier": 0.14285714285714285,
+      "confidence": 0.615234375,
+      "source": "quantum_genesis",
+      "timestamp": "2025-12-19T14:05:53.444904"
+    },
+    {
+      "id": "QA_DNA_045e97c2_20251219140653",
+      "genome_id": "DNA_045e97c2",
+      "generation": 31,
+      "fitness": 0.54296875,
+      "dna_sequence": "GGTGTTC",
+      "bitstring_seed": "10100110010111",
+      "signal_modifier": 0.14285714285714285,
+      "confidence": 0.54296875,
+      "source": "quantum_genesis",
+      "timestamp": "2025-12-19T14:06:53.585761"
+    }
+  ]
+}

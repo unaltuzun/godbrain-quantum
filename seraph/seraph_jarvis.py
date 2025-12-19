@@ -269,6 +269,11 @@ class SeraphJarvis:
         except Exception:
             pass
         
+        # Add Quantum Lab Wisdom (NEW!)
+        quantum_context = self._get_quantum_wisdom_context()
+        if quantum_context:
+            parts.append(quantum_context)
+        
         # Add current time with STRONG temporal awareness
         now = datetime.now()
         current_year = now.year
@@ -287,6 +292,79 @@ Geçmiş yılları ({current_year - 1}, {current_year - 2}) kullanmak HATADIR.""
         parts.append(temporal_context)
         
         return "\n".join(parts)
+    
+    def _get_quantum_wisdom_context(self) -> str:
+        """Load Quantum Lab wisdom and anomalies for context."""
+        try:
+            import json
+            from pathlib import Path
+            
+            wisdom_file = Path(__file__).parent.parent / "quantum_lab" / "wisdom" / "latest_wisdom.json"
+            anomalies_dir = Path(__file__).parent.parent / "discoveries"
+            
+            context_parts = ["\n## 🌌 QUANTUM LAB BİLİNCİ"]
+            
+            # Load latest wisdom
+            if wisdom_file.exists():
+                with open(wisdom_file) as f:
+                    wisdom = json.load(f)
+                
+                context_parts.append(f"""
+### Evrimleşmiş Parametreler (Quantum Lab'dan)
+- **Toplam Nesil:** {wisdom.get('generation', 'N/A')}
+- **Global Şampiyon:** {wisdom.get('global_champion', {}).get('id', 'N/A')} (Fitness: {wisdom.get('global_champion', {}).get('fitness', 'N/A')})
+- **Şampiyon Rejimi:** {wisdom.get('global_champion', {}).get('regime', 'N/A')}
+- **Ensemble Stop Loss:** {wisdom.get('ensemble_params', {}).get('stop_loss_pct', 'N/A')}%
+- **Ensemble Take Profit:** {wisdom.get('ensemble_params', {}).get('take_profit_pct', 'N/A')}%
+- **RSI Alım Seviyesi:** {wisdom.get('ensemble_params', {}).get('rsi_buy_level', 'N/A')}
+- **RSI Satım Seviyesi:** {wisdom.get('ensemble_params', {}).get('rsi_sell_level', 'N/A')}
+- **Pozisyon Çarpanı:** {wisdom.get('ensemble_params', {}).get('position_size_factor', 'N/A')}
+
+⚠️ Bu parametreler 6 paralel evrende (BULL, BEAR, NEUTRAL, CRASH, EUPHORIA, SIDEWAYS) binlerce nesil boyunca evrimleşerek optimize edildi.
+""")
+            
+            # Count anomalies
+            if anomalies_dir.exists():
+                anomaly_count = len(list(anomalies_dir.glob("*.json")))
+                if anomaly_count > 0:
+                    context_parts.append(f"""
+### Tespit Edilen Anomaliler
+- **Toplam Keşif:** {anomaly_count} anomali
+- Bu anomaliler Nobel-potansiyelli fiziksel örüntüler içerir (Phase Transitions, Power Laws, Universal Attractors)
+""")
+            
+            # Load engine state for epoch info
+            state_file = Path(__file__).parent.parent / "quantum_lab" / "wisdom" / "engine_state.json"
+            if state_file.exists():
+                with open(state_file) as f:
+                    state = json.load(f)
+                context_parts.append(f"""
+### Quantum Lab Durumu
+- **Güncel Epoch:** {state.get('epoch', 'N/A')}
+- **Son Güncelleme:** {state.get('timestamp', 'N/A')}
+""")
+            
+            # Load Quantum Genesis data (IBM Quantum Evolution)
+            genesis_file = Path(__file__).parent.parent / "quantum_genesis" / "anomalies" / "quantum_anomalies.json"
+            if genesis_file.exists():
+                with open(genesis_file) as f:
+                    genesis = json.load(f)
+                if genesis.get('alpha_anomaly'):
+                    alpha = genesis['alpha_anomaly']
+                    context_parts.append(f"""
+### 🧬 Quantum Genesis (IBM Quantum Evrim)
+- **Alpha DNA:** {alpha.get('dna_sequence', 'N/A')}
+- **Fitness:** {alpha.get('fitness', 'N/A')}
+- **Nesil:** {alpha.get('generation', 'N/A')}
+- **Sinyal:** {genesis.get('signal', {}).get('direction', 'N/A')} ({genesis.get('signal', {}).get('strength', 0):.2%} güç)
+
+⚡ Bu DNA IBM'in gerçek kuantum işlemcisinde (ibm_fez/marrakesh/torino) evrimleşti!
+""")
+            
+            return "\n".join(context_parts) if len(context_parts) > 1 else ""
+            
+        except Exception as e:
+            return f"\n## 🌌 QUANTUM LAB BİLİNCİ\n(Yüklenemedi: {e})"
     
     def chat(self, user_message: str) -> str:
         """

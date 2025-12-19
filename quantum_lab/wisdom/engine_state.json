@@ -1,11 +1,11 @@
 {
-  "epoch": 230,
-  "total_generations": 230,
-  "timestamp": "2025-12-18T18:40:03.496565",
+  "epoch": 2910,
+  "total_generations": 2910,
+  "timestamp": "2025-12-19T14:03:38.902155",
   "universes": {
     "100000": {
       "regime": "BULL",
-      "generation": 230,
+      "generation": 2910,
       "best_fitness": 100,
       "champion": {
         "id": "g34785",
@@ -122,7 +122,7 @@
     },
     "100001": {
       "regime": "BEAR",
-      "generation": 230,
+      "generation": 2910,
       "best_fitness": 100,
       "champion": {
         "id": "g63544",
@@ -239,7 +239,7 @@
     },
     "100002": {
       "regime": "NEUTRAL",
-      "generation": 230,
+      "generation": 2910,
       "best_fitness": 100,
       "champion": {
         "id": "g89397",
@@ -356,7 +356,7 @@
     },
     "100003": {
       "regime": "CRASH",
-      "generation": 230,
+      "generation": 2910,
       "best_fitness": 100,
       "champion": {
         "id": "g55074",
@@ -473,7 +473,7 @@
     },
     "100004": {
       "regime": "EUPHORIA",
-      "generation": 230,
+      "generation": 2910,
       "best_fitness": 100,
       "champion": {
         "id": "g57500",
@@ -590,7 +590,7 @@
     },
     "100005": {
       "regime": "SIDEWAYS",
-      "generation": 230,
+      "generation": 2910,
       "best_fitness": 100,
       "champion": {
         "id": "g24877",

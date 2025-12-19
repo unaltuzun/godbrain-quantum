@@ -1,0 +1,18 @@
+{
+  "id": "attractor_20251219_031951",
+  "type": "universal_attractor",
+  "timestamp": "2025-12-19T03:19:51.596509",
+  "title": "Universal Attractor Detected!",
+  "description": "All lineages converging to point (np.float64(0.051363188629161005), np.float64(0.08124643282494548))",
+  "confidence": 0.9878197952990149,
+  "significance": 41.05021304831191,
+  "nobel_potential": 2,
+  "generation_range": [
+    0,
+    261
+  ],
+  "affected_genomes": 1946,
+  "evidence": [
+    "Variance: stab=0.013953, energy=0.010407"
+  ]
+}
