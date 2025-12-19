@@ -1,7 +1,7 @@
 {
   "source": "quantum_genesis",
-  "timestamp": "2025-12-19T15:55:58.147721",
-  "total_anomalies": 52,
+  "timestamp": "2025-12-19T15:59:58.856956",
+  "total_anomalies": 56,
   "alpha_anomaly": {
     "id": "QA_DNA_7be0da89_20251219150655",
     "genome_id": "DNA_7be0da89",
@@ -21,54 +21,6 @@
     "source": "quantum_evolution"
   },
   "recent_anomalies": [
-    {
-      "id": "QA_DNA_c8df4bca_20251219154657",
-      "genome_id": "DNA_c8df4bca",
-      "generation": 535,
-      "fitness": 0.5263671875,
-      "dna_sequence": "TTAAT",
-      "bitstring_seed": "0101000001",
-      "signal_modifier": -0.4,
-      "confidence": 0.5263671875,
-      "source": "quantum_genesis",
-      "timestamp": "2025-12-19T15:46:57.787355"
-    },
-    {
-      "id": "QA_DNA_8db88d00_20251219154757",
-      "genome_id": "DNA_8db88d00",
-      "generation": 548,
-      "fitness": 0.5625,
-      "dna_sequence": "TAGT",
-      "bitstring_seed": "01001001",
-      "signal_modifier": -0.25,
-      "confidence": 0.5625,
-      "source": "quantum_genesis",
-      "timestamp": "2025-12-19T15:47:57.820843"
-    },
-    {
-      "id": "QA_DNA_a6b2d1dc_20251219154857",
-      "genome_id": "DNA_a6b2d1dc",
-      "generation": 557,
-      "fitness": 0.5693359375,
-      "dna_sequence": "AGGGT",
-      "bitstring_seed": "0010101001",
-      "signal_modifier": -0.2,
-      "confidence": 0.5693359375,
-      "source": "quantum_genesis",
-      "timestamp": "2025-12-19T15:48:57.858151"
-    },
-    {
-      "id": "QA_DNA_d44ae8c3_20251219154957",
-      "genome_id": "DNA_d44ae8c3",
-      "generation": 572,
-      "fitness": 0.53125,
-      "dna_sequence": "GTGGT",
-      "bitstring_seed": "1001101001",
-      "signal_modifier": 0.0,
-      "confidence": 0.53125,
-      "source": "quantum_genesis",
-      "timestamp": "2025-12-19T15:49:57.886544"
-    },
     {
       "id": "QA_DNA_9f2836e3_20251219155057",
       "genome_id": "DNA_9f2836e3",
@@ -140,6 +92,54 @@
       "confidence": 0.6513671875,
       "source": "quantum_genesis",
       "timestamp": "2025-12-19T15:55:58.147663"
+    },
+    {
+      "id": "QA_DNA_451c0ebf_20251219155658",
+      "genome_id": "DNA_451c0ebf",
+      "generation": 661,
+      "fitness": 0.623046875,
+      "dna_sequence": "TAGCCT",
+      "bitstring_seed": "010010111101",
+      "signal_modifier": 0.16666666666666666,
+      "confidence": 0.623046875,
+      "source": "quantum_genesis",
+      "timestamp": "2025-12-19T15:56:58.467729"
+    },
+    {
+      "id": "QA_DNA_d548d4cd_20251219155758",
+      "genome_id": "DNA_d548d4cd",
+      "generation": 672,
+      "fitness": 0.5888671875,
+      "dna_sequence": "AGCT",
+      "bitstring_seed": "00101101",
+      "signal_modifier": 0.0,
+      "confidence": 0.5888671875,
+      "source": "quantum_genesis",
+      "timestamp": "2025-12-19T15:57:58.739130"
+    },
+    {
+      "id": "QA_DNA_2652ad22_20251219155858",
+      "genome_id": "DNA_2652ad22",
+      "generation": 686,
+      "fitness": 0.5390625,
+      "dna_sequence": "AGT",
+      "bitstring_seed": "001001",
+      "signal_modifier": -0.3333333333333333,
+      "confidence": 0.5390625,
+      "source": "quantum_genesis",
+      "timestamp": "2025-12-19T15:58:58.811038"
+    },
+    {
+      "id": "QA_DNA_48b463dd_20251219155958",
+      "genome_id": "DNA_48b463dd",
+      "generation": 697,
+      "fitness": 0.6279296875,
+      "dna_sequence": "AAGT",
+      "bitstring_seed": "00001001",
+      "signal_modifier": -0.5,
+      "confidence": 0.6279296875,
+      "source": "quantum_genesis",
+      "timestamp": "2025-12-19T15:59:58.856889"
     }
   ]
 }
