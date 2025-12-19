@@ -1,0 +1,32 @@
+# ==============================================================================
+# GODBRAIN QUANTUM GENESIS - IBM Quantum Evolution Lab
+# ==============================================================================
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python packages in stages to avoid timeout
+RUN pip install --no-cache-dir --timeout 300 \
+    redis python-dotenv pandas numpy scipy rich
+
+# Install qiskit packages separately (they're large)
+RUN pip install --no-cache-dir --timeout 600 \
+    qiskit qiskit-ibm-runtime
+
+# Copy quantum genesis module
+COPY quantum_genesis/ ./quantum_genesis/
+
+# Create data directories
+RUN mkdir -p data quantum_genesis/anomalies
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app
+
+# Run quantum genesis daemon
+CMD ["python", "-m", "quantum_genesis.genesis_daemon", "--epochs", "0"]
