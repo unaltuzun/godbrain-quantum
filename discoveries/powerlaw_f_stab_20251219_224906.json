@@ -1,0 +1,19 @@
+{
+  "id": "powerlaw_f_stab_20251219_224906",
+  "type": "power_law",
+  "timestamp": "2025-12-19T22:49:06.805819",
+  "title": "Power Law in f_stab!",
+  "description": "Power law with \u03b1=2.33, R\u00b2=0.9670",
+  "confidence": 0.9669516616710012,
+  "significance": 23.229700351206517,
+  "nobel_potential": 3,
+  "generation_range": [
+    0,
+    261
+  ],
+  "affected_genomes": 9109,
+  "evidence": [
+    "Exponent \u03b1 = 2.33",
+    "R\u00b2 = 0.9670"
+  ]
+}
