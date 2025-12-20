@@ -315,6 +315,34 @@ services:
       - ./quantum_genesis:/app/quantum_genesis
       - ./data:/app/data
 
+  # ============================================================================
+  # MOBILE API - REST API for Mobile App (godbrain.org)
+  # ============================================================================
+  mobile-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.mobile-api
+    container_name: godbrain-mobile-api
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASS=${REDIS_PASS:-voltran2024}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    networks:
+      - godbrain-network
+    volumes:
+      - ./seraph:/app/seraph
+      - ./quantum_lab:/app/quantum_lab
+      - ./discoveries:/app/discoveries
+
 volumes:
   redis-data:
 
