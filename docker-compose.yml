@@ -334,7 +334,7 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
     ports:
-      - "8000:8000"
+      - "8001:8000"
     restart: unless-stopped
     networks:
       - godbrain-network
