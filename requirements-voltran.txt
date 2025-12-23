@@ -1,9 +1,9 @@
 # ==============================================================================
-# GODBRAIN VOLTRAN - Lightweight Requirements (No GPU/PyTorch)
+# GODBRAIN VOLTRAN - Full Requirements (With Edge AI / PyTorch)
 # ==============================================================================
 
 # Core Trading
-ccxt==4.3.92
+ccxt>=4.5.26
 python-dotenv==1.0.1
 requests>=2.31.0
 redis>=5.0.0
@@ -15,4 +15,9 @@ numpy>=1.24.0
 # Async & Networking
 aiohttp>=3.8.0
 websockets>=11.0
+
+# Edge AI (PyTorch CPU - smaller image size)
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.1.0+cpu
+torchvision==0.16.0+cpu
 

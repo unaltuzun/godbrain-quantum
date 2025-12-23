@@ -38,20 +38,22 @@ def _get_score(r, meta_key, dna_key, score_fields, default_dna):
     except:
         return 50.0, 0, default_dna
 
+from config_center import config
+
 def get_voltran_snapshot(force=False):
     global _cache
     now = time.time()
     if not force and _cache["data"] and (now - _cache["ts"]) < 30:
         return _cache["data"]
     
-    gen_r = _get_redis(GEN_HOST, GEN_PORT, GEN_PASS)
-    labs_r = _get_redis(LABS_HOST, LABS_PORT, LABS_PASS)
+    gen_r = _get_redis(config.REDIS_GENETICS_HOST, config.REDIS_GENETICS_PORT, config.REDIS_GENETICS_PASS)
+    labs_r = _get_redis(config.REDIS_HOST, config.REDIS_PORT, config.REDIS_PASS)
     
-    bj, bj_gen, bj_dna = _get_score(gen_r, "godbrain:genetics:best_meta", "godbrain:genetics:best_dna",
-                                      ["score", "bj_score"], [10,10,234,326,354,500])
-    rl, rl_gen, rl_dna = _get_score(labs_r, "godbrain:roulette:best_meta", "godbrain:roulette:best_dna",
+    bj, bj_gen, bj_dna = _get_score(gen_r, config.BJ_META_KEY, config.BJ_DNA_KEY,
+                                      ["score", "bj_score", "best_profit"], [10,10,234,326,354,500])
+    rl, rl_gen, rl_dna = _get_score(labs_r, config.RL_META_KEY, config.RL_DNA_KEY,
                                       ["score"], [50,40,30,25,20,15])
-    ch, ch_gen, ch_dna = _get_score(labs_r, "godbrain:chaos:best_meta", "godbrain:chaos:best_dna",
+    ch, ch_gen, ch_dna = _get_score(labs_r, config.CH_META_KEY, config.CH_DNA_KEY,
                                       ["cosmic_harmony", "score"], [100,50,80,40,120,60])
     
     vs = (max(1,bj) * max(1,rl) * max(1,ch)) ** (1/3)

@@ -5,7 +5,7 @@ An autonomous AI-powered quantitative trading system that evolves trading strate
 
 ---
 
-## Architecture Overview
+## Architecture Overview (v5.0 Simplified)
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -16,26 +16,24 @@ An autonomous AI-powered quantitative trading system that evolves trading strate
                     Cloudflare Tunnel
                               │
 ┌─────────────────────────────────────────────────────────────────┐
-│                      Docker Host (Windows)                       │
+│                      Hybrid Execution Environment                │
 ├────────────────┬────────────────┬────────────────┬──────────────┤
-│  Mobile App    │  Mobile API    │   Dashboard    │    Redis     │
-│  (Next.js)     │  (Flask:8001)  │  (Flask:8000)  │  (:16379)    │
-│  :3000         │                │  + Seraph AI   │              │
+│   VOLTRAN 5.0  │   Genetics Lab │   Dashboard    │    Redis     │
+│   (Modular)    │   (BJ/RL/CH)   │  + Seraph AI   │  (Namespaced)│
 └────────────────┴────────────────┴────────────────┴──────────────┘
                               │
 ┌─────────────────────────────────────────────────────────────────┐
-│                     Core Trading Services                        │
+│                     Active Evolution Core                       │
 ├─────────────────┬─────────────────┬─────────────────────────────┤
-│   VOLTRAN       │   Market Feed   │     Genetics Lab            │
-│   (agg.py)      │   (OKX WSS)     │  Blackjack/Roulette/Chaos   │
-│   Aggregator    │   BTC/USDT      │     DNA Evolution           │
+│   Harvester     │   Executor      │     Health Check            │
+│  (Aggregator)   │   (Actions)     │     (:8080/health)          │
 └─────────────────┴─────────────────┴─────────────────────────────┘
                               │
 ┌─────────────────────────────────────────────────────────────────┐
-│                    Intelligence Layer                            │
+│                    Archived / Dormant Layer                      │
 ├────────────────┬────────────────┬────────────────┬──────────────┤
-│ Quantum Lab    │ Quantum Genesis│ Anomaly Hunter │  Sentinel    │
-│ (DNA Wisdom)   │ (IBM Quantum)  │ (Detection)    │ (Self-Heal)  │
+│  Quantum Lab   │    Neural      │ DNA Pusher     │   Anomaly    │
+│  (Mothballed)  │ (Mothballed)   │ (Deprecated)   │  (Passive)   │
 └────────────────┴────────────────┴────────────────┴──────────────┘
 ```
 
@@ -45,69 +43,44 @@ An autonomous AI-powered quantitative trading system that evolves trading strate
 
 | Category | Technologies |
 |----------|-------------|
-| **Backend** | Python 3.11, Flask, Redis |
-| **Frontend** | Next.js 16, React 19, TypeScript, TailwindCSS |
-| **AI/ML** | Claude 3.5, GPT-4, Gemini 2.0, Multi-LLM Router |
-| **Quantum** | IBM Quantum (Qiskit), QAOA circuits |
-| **Data** | OKX WebSocket, Real-time BTC/USDT |
-| **Infrastructure** | Docker Compose, Cloudflare Tunnel |
-| **Evolution** | Genetic Algorithms, DNA-based strategies |
+| **Execution Core** | Python 3.11, CCXT, aiohttp (Health) |
+| **Configuration** | Centralized `config_center.py`, `.env` |
+| **Observability** | `/health` API, Sentinel Monitoring |
+| **Logic Layer** | Blackjack (Edge), Roulette (Risk), Chaos (Entropy) |
+| **AI Layer** | Seraph AI (Multi-LLM Router), Edge AI (Enrichment) |
 
 ---
 
-## Docker Services (12 Total)
+## Simplified Services (Optimized for Stability)
 
-| Service | Purpose | Port |
-|---------|---------|------|
-| `godbrain-redis` | Central data store | 16379 |
-| `godbrain-market-feed` | OKX price feed | - |
-| `godbrain-voltran` | Trading aggregator | - |
-| `godbrain-dashboard` | Web UI + Seraph AI | 8000 |
-| `godbrain-genetics` | Lab simulations | - |
-| `godbrain-quantum-lab` | DNA evolution | - |
-| `godbrain-quantum-genesis` | IBM Quantum integration | - |
-| `godbrain-anomaly-hunter` | Anomaly detection | - |
-| `godbrain-sentinel` | Self-healing monitor | - |
-| `godbrain-feedback-loop` | Backtesting | - |
-| `godbrain-dna-pusher` | Strategy injection | - |
-| `godbrain-mobile-api` | Mobile REST API | 8001 |
+| Service | Purpose | Port | Status |
+|---------|---------|------|--------|
+| `voltran-agg` | Modular Trading Orchestrator | 8080 | **ACTIVE** |
+| `genetics-labs` | Unified Evolution Engine (BJ/RL/CH) | - | **ACTIVE** |
+| `redis` | Namespaced Data Store (`genetics:*`, etc) | 16379 | **ACTIVE** |
+| `dashboard` | Web UI + Seraph AI | 8000 | **ACTIVE** |
+| `mobile-api` | Mobile REST API | 8001 | **ACTIVE** |
+| `neural-*` | LSTM/Transformer Training | - | *ARCHIVED* |
+| `quantum-*` | Multiverse Simulations | - | *ARCHIVED* |
 
 ---
 
-## Key Modules
+## Key Modules (Modular v5.0)
 
-### 1. VOLTRAN (`core/agg.py`)
-Main trading aggregator. Collects signals from all labs, calculates consensus, manages risk.
+### 1. The Orchestrator (`agg.py`)
+Lean coordinator (~90 lines). Uses `harvester` for signals and `executor` for actions.
 
-### 2. Seraph AI (`seraph/`)
-Multi-LLM AI assistant with:
-- **LLM Router**: Routes queries to best model (Claude/GPT/Gemini)
-- **Quantum Wisdom**: Injects DNA discoveries into responses
-- **Long-term Memory**: Stores conversation context
+### 2. Signal Harvester (`signals/harvester.py`)
+One-stop shop for all market and genetic signals. Fail-safe by design.
 
-### 3. Quantum Lab (`quantum_lab/`)
-DNA strategy evolution:
-- Evolves trading parameters over generations
-- Produces "wisdom" from successful strategies
-- Current: Generation 5660+
+### 3. Execution Engine (`execution/executor.py`)
+Handles OKX interactions, position sizing, and "YA HERRO YA MERRO" aggressive scaling.
 
-### 4. Quantum Genesis (`quantum_genesis/`)
-IBM Quantum integration:
-- Runs QAOA circuits for optimization
-- Generates quantum anomalies
-- Connected to IBM Brisbane quantum computer
+### 4. Config Center (`config_center.py`)
+Single source of truth for all system parameters and Redis namespaces.
 
-### 5. Anomaly Hunter (`anomaly_hunter/`)
-Detects market anomalies using:
-- Statistical methods
-- Z-score analysis
-- Pattern recognition
-
-### 6. Genetics Labs (`core/genetics_lab.py`)
-Three simulation labs:
-- **Blackjack**: Card counting strategies
-- **Roulette**: Probability analysis
-- **Chaos**: Randomness exploitation
+### 5. Seraph AI (`seraph/`)
+Multi-LLM AI assistant. Now integrates with the simplified telemetry.
 
 ---
 

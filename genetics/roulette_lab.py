@@ -25,13 +25,15 @@ REDIS_HOST = os.getenv('REDIS_HOST', '127.0.0.1')
 REDIS_PORT = int(os.getenv('REDIS_PORT', '16379'))
 REDIS_PASS = os.getenv('REDIS_PASS', 'voltran2024')
 
+from config_center import config
+
 POPULATION_SIZE = 50
 SPINS_PER_EVAL = 10000
 STARTING_BANKROLL = 10000
 MIN_BET, MAX_BET = 10, 500
 
-ROULETTE_DNA_KEY = "godbrain:roulette:best_dna"
-ROULETTE_META_KEY = "godbrain:roulette:best_meta"
+ROULETTE_DNA_KEY = config.RL_DNA_KEY
+ROULETTE_META_KEY = config.RL_META_KEY
 
 WIN_PROB = 18 / 37  # European roulette red/black
 

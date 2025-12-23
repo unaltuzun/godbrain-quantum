@@ -135,9 +135,11 @@ spec:
           value: "redis.godbrain.svc.cluster.local"
         # Trading Config
         - name: SYMBOLS
-          value: "DOGE/USDT:USDT,XRP/USDT:USDT,SOL/USDT:USDT"
+          value: "DOGE/USDT:USDT,XRP/USDT:USDT"
         - name: EQUITY_FRACTION
-          value: "0.8"
+          value: "0.9"
+        - name: APEX_LIVE
+          value: "true"
         resources:
           requests:
             memory: "256Mi"
@@ -145,15 +147,39 @@ spec:
           limits:
             memory: "512Mi"
             cpu: "500m"
+        volumeMounts:
+        - name: agg-code
+          mountPath: /app/agg.py
+          subPath: agg.py
+        - name: agg-code
+          mountPath: /app/config_center.py
+          subPath: config_center.py
+        - name: agg-code
+          mountPath: /app/signals/harvester.py
+          subPath: harvester.py
+        - name: agg-code
+          mountPath: /app/execution/executor.py
+          subPath: executor.py
+        - name: edge-ai-code
+          mountPath: /app/edge_ai/__init__.py
+          subPath: __init__.py
+        - name: edge-ai-code
+          mountPath: /app/edge_ai/inference.py
+          subPath: inference.py
         livenessProbe:
-          exec:
-            command:
-            - sh
-            - -c
-            - "pgrep -f 'agg.py' || exit 1"
+          httpGet:
+            path: /health
+            port: 8080
           initialDelaySeconds: 60
           periodSeconds: 30
           failureThreshold: 3
+      volumes:
+      - name: agg-code
+        configMap:
+          name: voltran-agg-code
+      - name: edge-ai-code
+        configMap:
+          name: voltran-edge-ai-pkg
 
 ---
 # ==============================================================================

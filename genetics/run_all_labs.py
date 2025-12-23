@@ -12,24 +12,38 @@ import time
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from config_center import config
+
 def run_blackjack():
     from genetics.blackjack_lab import run_evolution
     try:
-        run_evolution()
+        run_evolution(
+            redis_host=config.REDIS_HOST,
+            redis_port=config.REDIS_PORT,
+            redis_pass=config.REDIS_PASS
+        )
     except Exception as e:
         print(f"[BLACKJACK] Error: {e}")
 
 def run_roulette():
     from genetics.roulette_lab import run_evolution
     try:
-        run_evolution()
+        run_evolution(
+            redis_host=config.REDIS_HOST,
+            redis_port=config.REDIS_PORT,
+            redis_pass=config.REDIS_PASS
+        )
     except Exception as e:
         print(f"[ROULETTE] Error: {e}")
 
 def run_chaos():
     from genetics.chaos_lab import run_cosmic_evolution
     try:
-        run_cosmic_evolution()
+        run_cosmic_evolution(
+            redis_host=config.REDIS_HOST,
+            redis_port=config.REDIS_PORT,
+            redis_pass=config.REDIS_PASS
+        )
     except Exception as e:
         print(f"[CHAOS] Error: {e}")
 

@@ -11,10 +11,21 @@ echo [1/4] Temizlik yapiliyor...
 taskkill /f /im python.exe >nul 2>&1
 taskkill /f /im ssh.exe >nul 2>&1
 
-:: 2. VOLTRAN TUNELI (SSH)
-echo [2/4] Voltran Tuneli Aciliyor...
-:: Kendi kullanici adini dinamik alir (%USERPROFILE%)
-start /min "TUNNEL" ssh -N -L 16379:127.0.0.1:6379 -i "%USERPROFILE%\.ssh\id_ed25519" -o StrictHostKeyChecking=no zzkidreal@34.140.113.224
+:: 2. VOLTRAN TUNELI (KUBERNETES PORT-FORWARD)
+echo [2/4] Baglanti Kanallari Aciliyor...
+:: Cloudflare Tunnel Check
+tasklist /FI "IMAGENAME eq cloudflared.exe" | findstr /I "cloudflared.exe" >nul
+if %errorlevel% neq 0 (
+    echo >> Starting Cloudflare Tunnel...
+    start /min "CLOUDFLARE" cloudflared tunnel --config cloudflared_config.yml --logfile cloudflared.log run godbrain
+)
+
+:: Kubernetes Redis Port Forward (replaces old SSH tunnel)
+echo >> Starting Kubernetes Redis Tunnel...
+tasklist /FI "WINDOWTITLE eq GODBRAIN Redis Tunnel*" | findstr /I "cmd.exe" >nul
+if %errorlevel% neq 0 (
+    start /min "REDIS_TUNNEL" scripts\redis_tunnel.bat
+)
 
 :: 3. MARKET FEEDER (OKX)
 echo [3/4] Piyasa Verisi Baglaniyor...

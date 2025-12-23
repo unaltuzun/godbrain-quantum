@@ -10,10 +10,14 @@ Mission: Be an intelligent, ever-learning companion for GODBRAIN
 
 import os
 import json
-import asyncio
+import logging
+import random
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Any
+
+# Setup logging
+logger = logging.getLogger("seraph.jarvis")
 
 try:
     import anthropic
@@ -32,11 +36,9 @@ except ImportError:
 from seraph.long_term_memory import get_long_term_memory, LongTermMemory
 from seraph.system_awareness import SystemAwareness
 from seraph.codebase_rag import CodebaseRAG
+from seraph.autonomous_mind import AutonomousMind
 
-# SeraphTools disabled to avoid import conflict with seraph/tools/ directory
-# This is acceptable - Seraph can still chat, remember, and analyze without tool execution
-SeraphTools = None
-
+from seraph.tools import SeraphTools
 
 
 ROOT = Path(__file__).parent.parent
@@ -164,6 +166,9 @@ class SeraphJarvis:
         self.birth_date = datetime(2024, 12, 15)
         self.creator = "Unaltuzun (Zeki)"
         
+        # Autonomous Mind core
+        self._mind = None
+        
         # Note: conversation history is loaded lazily with memory
     
     @property
@@ -195,6 +200,13 @@ class SeraphJarvis:
         if self._tools is None:
             self._tools = SeraphTools() if SeraphTools else None
         return self._tools
+
+    @property
+    def mind(self) -> AutonomousMind:
+        """Lazy-load AutonomousMind."""
+        if self._mind is None:
+            self._mind = AutonomousMind()
+        return self._mind
     
     @property
     def news_collector(self):
@@ -280,14 +292,13 @@ class SeraphJarvis:
         days_in_year = (now - datetime(current_year, 1, 1)).days + 1
         
         temporal_context = f"""
-## ZAMAN (KRİTİK - MUTLAKA KULLAN)
-- **Şu an:** {now.strftime('%Y-%m-%d %H:%M:%S')}
-- **Güncel Yıl:** {current_year} (Bu yılı TÜM araştırmalarda kullan!)
+## ZAMAN (KRİTİK - HER ZAMAN BİL)
+- **Şu anki yerel tarih ve saat:** {now.strftime('%Y-%m-%d %H:%M:%S')}
+- **Güncel Yıl:** {current_year}
 - **Yılın {days_in_year}. günü**
 - **Haftanın günü:** {now.strftime('%A')}
 
-⚠️ **ÖNEMLİ**: Araştırma, tarih hesaplaması veya gelecek olayları incelerken MUTLAKA {current_year} yılını kullan. 
-Geçmiş yılları ({current_year - 1}, {current_year - 2}) kullanmak HATADIR."""
+⚠️ **ÖNEMLİ**: Sen gerçek zamanlı çalışan bir sistemsin. Kullanıcı "bugün", "şimdi" veya "ne zaman" dediğinde yukarıdaki zamanı referans al. Araştırmalarında ve analizlerinde MUTLAKA {current_year} yılını temel al."""
         
         parts.append(temporal_context)
         
@@ -366,101 +377,37 @@ Geçmiş yılları ({current_year - 1}, {current_year - 2}) kullanmak HATADIR.""
         except Exception as e:
             return f"\n## 🌌 QUANTUM LAB BİLİNCİ\n(Yüklenemedi: {e})"
     
-    def chat(self, user_message: str) -> str:
+    async def chat(self, user_message: str) -> str:
         """
-        Have a conversation with SERAPH.
-        
-        Args:
-            user_message: User's message
-        
-        Returns:
-            SERAPH's response
+        Have a conversation with SERAPH using its Autonomous Mind.
         """
-        client = self._get_client()
-        
-        # Build system prompt
-        system_prompt = self._build_system_prompt()
-        
-        # Add user message to history
-        self._conversation_history.append({
-            "role": "user",
-            "content": user_message
-        })
-        
-        # Keep only last 20 messages for context window
-        messages = self._conversation_history[-20:]
-        
-        # Check if we need RAG context
-        if any(kw in user_message.lower() for kw in ["kod", "code", "dosya", "file", "fonksiyon", "function", "class"]):
-            try:
-                rag_results = self.rag.search(user_message, top_k=3)
-                if rag_results:
-                    rag_context = "\n\n## İLGİLİ KOD\n"
-                    for r in rag_results:
-                        rag_context += f"\n### {r.get('file', 'Unknown')}\n```python\n{r.get('content', '')[:500]}\n```\n"
-                    system_prompt += rag_context
-            except Exception:
-                pass
-        
-        # Check if we need news context
-        if any(kw in user_message.lower() for kw in ["haber", "news", "piyasa", "market", "bitcoin", "btc", "eth", "crypto", "kripto"]):
-            try:
-                news_headlines = self.get_latest_news(5)
-                if news_headlines and "kullanılamıyor" not in news_headlines:
-                    system_prompt += f"\n\n## GÜNCEL KRİPTO HABERLERİ\n{news_headlines}\n"
-            except Exception:
-                pass
-        
-        # Make API call - use router if available, otherwise direct client
         try:
-            if self._use_router:
-                # Use Multi-LLM Router (with cost tracking and fallback)
-                import asyncio
-                router = self._get_router()
-                
-                # Run async in sync context
-                loop = asyncio.new_event_loop()
-                try:
-                    response = loop.run_until_complete(
-                        router.complete(
-                            task_type=self.TASK_TYPE,
-                            content=user_message,
-                            messages=messages,
-                            system=system_prompt,
-                            max_tokens=self.MAX_TOKENS,
-                            temperature=0.7
-                        )
-                    )
-                finally:
-                    loop.close()
-                
-                assistant_message = response.content
-                self._total_cost += response.cost_usd
-            else:
-                # Legacy direct Anthropic call
-                response = client.messages.create(
-                    model=self.MODEL,
-                    max_tokens=self.MAX_TOKENS,
-                    system=system_prompt,
-                    messages=messages
-                )
-                assistant_message = response.content[0].text
+            # Build history for the mind
+            history = self._get_context_messages()
             
-            # Add to history
-            self._conversation_history.append({
-                "role": "assistant",
-                "content": assistant_message
-            })
+            # Rethink and answer
+            thought, answer = await self.mind.think(user_message, history)
             
-            # Save to long-term memory
-            self._save_to_memory(user_message, assistant_message)
+            # Record the mind's internal thought to hidden logs
+            if thought:
+                logger.info(f"SERAPH THOUGHT: {thought}")
             
-            return assistant_message
-        
+            # Add to local history
+            self._conversation_history.append({"role": "user", "content": user_message})
+            self._conversation_history.append({"role": "assistant", "content": answer})
+            
+            # Save to persistent memory
+            self._save_to_memory(user_message, answer)
+            
+            return answer
         except Exception as e:
-            error_msg = f"Üzgünüm, bir hata oluştu: {str(e)}"
-            self.memory.remember_error(f"Chat error: {str(e)}")
+            error_msg = f"Üzgünüm efendim, zihinsel bir karışıklık yaşıyorum: {str(e)}"
+            logger.error(f"Chat error: {str(e)}")
             return error_msg
+
+    def _get_context_messages(self) -> List[Dict]:
+        """Get limited conversation history."""
+        return self._conversation_history[-10:]
     
     def _save_to_memory(self, user_msg: str, assistant_msg: str):
         """Save conversation to long-term memory."""

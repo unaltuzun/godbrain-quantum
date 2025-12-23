@@ -69,8 +69,9 @@ while True:
         success = push_to_redis(real_price)
         timestamp = time.strftime("%H:%M:%S")
         status = "OK" if success else "REDIS FAIL"
-        print(f"[{timestamp}] OKX PRICE:  | SYNC: {status}", end='\r')
+        # FIX: Include price in log and clear line
+        print(f"[{timestamp}] OKX BTC: ${real_price:,.2f} | SYNC: {status}      ", end='\r')
     else:
-        print("Waiting for OKX...", end='\r')
+        print(f"[{time.strftime('%H:%M:%S')}] Waiting for OKX/Network...", end='\r')
         
     time.sleep(1.0)

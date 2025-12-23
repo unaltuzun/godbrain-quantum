@@ -25,12 +25,14 @@ REDIS_HOST = os.getenv('REDIS_HOST', '127.0.0.1')
 REDIS_PORT = int(os.getenv('REDIS_PORT', '16379'))
 REDIS_PASS = os.getenv('REDIS_PASS', 'voltran2024')
 
+from config_center import config
+
 POPULATION_SIZE = 50
 HANDS_PER_GEN = 50000
 MIN_BET, MAX_BET = 10, 500
 
-DNA_KEY = "godbrain:genetics:best_dna"
-META_KEY = "godbrain:genetics:best_meta"
+DNA_KEY = config.BJ_DNA_KEY
+META_KEY = config.BJ_META_KEY
 
 COUNT_VALUES = {2:1, 3:1, 4:1, 5:1, 6:1, 7:0, 8:0, 9:0, 10:-1, 11:-1}
 

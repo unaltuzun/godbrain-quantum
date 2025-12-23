@@ -1,7 +1,14 @@
 steps:
+  # 1. Build and Push VOLTRAN (Edge AI + balance fix)
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/godbrain/voltran:cpp', '-f', 'Dockerfile.voltran', '.']
+    args: ['build', '-f', 'Dockerfile.voltran', '-t', 'us-central1-docker.pkg.dev/project-9ad1ce66-06b2-4a7f-bad/godbrain/voltran:edge-ai', '.']
+  
+  # 2. Build and Push Market Feed (Price fix)
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/godbrain/voltran:cpp']
+    args: ['build', '-f', 'Dockerfile.market-feed', '-t', 'us-central1-docker.pkg.dev/project-9ad1ce66-06b2-4a7f-bad/godbrain/market-feed:latest', '.']
+
 images:
-  - 'us-central1-docker.pkg.dev/$PROJECT_ID/godbrain/voltran:cpp'
+  - 'us-central1-docker.pkg.dev/project-9ad1ce66-06b2-4a7f-bad/godbrain/voltran:edge-ai'
+  - 'us-central1-docker.pkg.dev/project-9ad1ce66-06b2-4a7f-bad/godbrain/market-feed:latest'
+
+timeout: '1800s'

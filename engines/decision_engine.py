@@ -18,8 +18,8 @@ from typing import Any, Dict, Optional
 class DecisionEngineConfig:
     # Gerekirse buraya risk / sizing parametreleri eklenebilir.
     min_trade_usd: float = 5.0
-    max_equity_fraction: float = 0.5  # trade başına max %50 equity cap
-    base_equity_fraction: float = 0.9  # per-coin equity'nin % kaçı baz alınacak
+    max_equity_fraction: float = 1.0  # trade başına max %100 equity cap
+    base_equity_fraction: float = 1.0  # per-coin equity'nin %100'ü baz alınacak
 
 
 class DecisionEngine:

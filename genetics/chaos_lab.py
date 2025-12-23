@@ -26,12 +26,14 @@ REDIS_HOST = os.getenv('REDIS_HOST', '127.0.0.1')
 REDIS_PORT = int(os.getenv('REDIS_PORT', '16379'))
 REDIS_PASS = os.getenv('REDIS_PASS', 'voltran2024')
 
+from config_center import config
+
 POPULATION_SIZE = 50
 ITERATIONS = 5000
 STARTING_CAPITAL = 10000
 
-CHAOS_DNA_KEY = "godbrain:chaos:best_dna"
-CHAOS_META_KEY = "godbrain:chaos:best_meta"
+CHAOS_DNA_KEY = config.CH_DNA_KEY
+CHAOS_META_KEY = config.CH_META_KEY
 
 PHI = (1 + math.sqrt(5)) / 2
 
