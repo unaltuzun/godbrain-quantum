@@ -135,7 +135,7 @@ spec:
           value: "redis.godbrain.svc.cluster.local"
         # Trading Config
         - name: SYMBOLS
-          value: "DOGE/USDT:USDT,XRP/USDT:USDT"
+          value: "PEPE/USDT:USDT,TIA/USDT:USDT,PI/USDT:USDT"
         - name: EQUITY_FRACTION
           value: "0.9"
         - name: APEX_LIVE

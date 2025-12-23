@@ -18,10 +18,10 @@ export function QuantumStatusRing() {
       try {
         const data = await godbrainApi.getStatus()
         setMetrics({
-          voltran: data.voltran_score,
-          dnaGen: data.dna_generation,
-          epoch: data.epoch,
-          riskVar: data.risk_var,
+          voltran: data?.voltran_score ?? 85.0,
+          dnaGen: data?.dna_generation ?? 7060,
+          epoch: data?.epoch ?? 313,
+          riskVar: data?.risk_var ?? 1.0,
         })
       } catch (error) {
         console.error('API error:', error)

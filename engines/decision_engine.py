@@ -17,9 +17,9 @@ from typing import Any, Dict, Optional
 @dataclass
 class DecisionEngineConfig:
     # Gerekirse buraya risk / sizing parametreleri eklenebilir.
-    min_trade_usd: float = 5.0
-    max_equity_fraction: float = 1.0  # trade başına max %100 equity cap
-    base_equity_fraction: float = 1.0  # per-coin equity'nin %100'ü baz alınacak
+    min_trade_usd: float = 1.0 
+    max_equity_fraction: float = 0.99  # trade başına max %99 equity (gas fee payı)
+    base_equity_fraction: float = 0.98  # per-coin equity'nin %98'i baz alınacak (HEPSİNİ BAS)
 
 
 class DecisionEngine:
@@ -140,10 +140,27 @@ class DecisionEngine:
 
         total_mult = dna_mult * float(voltran_factor)
 
-        # Sizing
+        # Sizing / Dynamic Risk Scaling
+        # Strategy: "Grow Fast, Protect Profit"
+        # If Equity < $150: Mode = AGGRESSIVE (98% All-in)
+        # If Equity >= $150: Mode = CONSERVATIVE (50% Risk)
+        
+        dynamic_fraction = self.config.max_equity_fraction
+        mode_label = "🔥 GROWTH (ALL-IN)"
+        
+        if equity_usd >= 150.0:
+             dynamic_fraction = 0.50 # Drop to 50% to protect gains
+             mode_label = "🛡️ PROTECT (50%)"
+
         base_size_usd = per_coin_equity * self.config.base_equity_fraction * flow_mult
         size_usd = max(self.config.min_trade_usd, base_size_usd * total_mult)
-        size_usd = min(size_usd, equity_usd * self.config.max_equity_fraction)
+        
+        # Apply the dynamic cap
+        size_usd = min(size_usd, equity_usd * dynamic_fraction)
+        
+        # Log mode if changing
+        if equity_usd >= 148.0: # Show transition warning near threshold
+             print(f"[{ts}] 💰 Wealth Check: ${equity_usd:.1f} -> {mode_label}")
 
         # Status line (önceki ile birebir aynı format)
         status_line = (

@@ -69,20 +69,30 @@ class GodbrainExecutor:
                 except Exception as le:
                     print(f"[EXEC] ⚠️ Leverage set failed (might be already set): {le}")
 
-            # 2) Refresh Free Balance for 'YA HERRO YA MERRO' scaling
+            # 2) Refresh Available Margin for 'YA HERRO YA MERRO' scaling
             try:
                 balance = self.okx.fetch_balance()
+                # For cross-margin swap, use 'total' or check 'info' for actual available
                 current_free = float(balance["free"].get("USDT", 0))
+                
+                # Fallback: If free is 0, use 40% of TOTAL equity (conservative for cross-margin)
+                if current_free < 1:
+                    current_total = float(balance["total"].get("USDT", 0))
+                    # Use 40% of total - cross-margin reserves the rest
+                    current_free = current_total * 0.40 if current_total > 5 else 0
+                    if current_free > 0:
+                        print(f"[EXEC] 🔓 UNLOCKED: Using 40% of total equity: ${current_free:.2f}")
+                        
             except Exception as be:
                 print(f"[EXEC] ⚠️ Balance refresh failed: {be}")
                 return None
 
-            # 3) YA HERRO YA MERRO: Scale to 95% of available margin power
-            all_in_size_usd = current_free * 0.95 * 10
+            # 3) YA HERRO YA MERRO: Scale to full available margin with 10x
+            all_in_size_usd = current_free * 10  # 10x leverage, no extra reduction
             
-            if all_in_size_usd < 5:
+            if all_in_size_usd < 2:
                 # Still show if skipping
-                if current_free < 1:
+                if current_free < 0.5:
                     print(f"[EXEC] ❌ Skip: Margin too low (${current_free:.2f})")
                 return None
 

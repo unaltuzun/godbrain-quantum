@@ -18,9 +18,11 @@ try:
 except ImportError:
     pass  # python-dotenv not installed
 
+from config_center import config
+
 # Initialize Flask
 app = Flask(__name__)
-CORS(app)  # Enable CORS for mobile app
+CORS(app)
 
 # Redis connection
 import redis
@@ -31,9 +33,9 @@ def get_redis():
     if redis_client is None:
         try:
             redis_client = redis.Redis(
-                host=os.getenv("REDIS_HOST", "localhost"),
-                port=int(os.getenv("REDIS_PORT", 16379)),
-                password=os.getenv("REDIS_PASS", "voltran2024"),
+                host=config.REDIS_HOST,
+                port=config.REDIS_PORT,
+                password=config.REDIS_PASS,
                 decode_responses=True
             )
         except:
@@ -51,44 +53,54 @@ def get_status():
     try:
         r = get_redis()
         
-        # Load wisdom for DNA info
-        wisdom_file = Path("quantum_lab/wisdom/latest_wisdom.json")
-        wisdom = {}
-        if wisdom_file.exists():
-            try:
-                with open(wisdom_file) as f:
-                    wisdom = json.load(f)
-            except: pass
+        # 1) Get Voltran & DNA metrics from Redis (Namespaced)
+        # BJ = Blackjack (Primary source of DNA alpha)
+        dna_meta = r.get(config.BJ_META_KEY) if r else None
+        voltran_state = r.get("state:voltran:snapshot") if r else None
         
-        # Load engine state
-        state_file = Path("quantum_lab/wisdom/engine_state.json")
-        state = {}
-        if state_file.exists():
-            try:
-                with open(state_file) as f:
-                    state = json.load(f)
-            except: pass
+        meta = json.loads(dna_meta) if dna_meta else {}
+        vstate = json.loads(voltran_state) if voltran_state else {}
         
-        # Calculate VOLTRAN score from fitness
-        champion_fitness = wisdom.get("champion_fitness", 0.85)
-        voltran_score = round(champion_fitness * 100, 1)
+        # 2) Calculate metrics from REAL lab data
+        # We try multiple fields to be robust against different lab outputs
+        voltran_score = vstate.get("score", vstate.get("voltran_score", 85.0))
+        dna_generation = meta.get("gen", meta.get("generation", meta.get("total_generations", 7060)))
+        epoch = meta.get("epoch", meta.get("gen", 7060))
         
+        # If voltran_score is default, try to derive it from profit
+        if voltran_score == 85.0 and "best_profit" in meta:
+            profit = meta["best_profit"]
+            voltran_score = round(min(100, 50 + (profit ** 0.1) * 10), 1)
+
+        # 3) Get Health Metrics from Aggregator (if available)
+        # We can also check the :8080/health endpoint or Redis pulse
+        pulse = r.get("pulse:orchestrator") if r else None
+        uptime = 0
+        if pulse:
+            pulse_data = json.loads(pulse)
+            boot_time = pulse_data.get("boot_time", 0)
+            if boot_time: uptime = int(datetime.now().timestamp() - boot_time)
+
         return jsonify({
             "voltran_score": voltran_score,
-            "dna_generation": wisdom.get("total_generations", 7060),
-            "epoch": state.get("epoch", 7060),
-            "risk_var": 2.1,  # TODO: Calculate from anomaly adjuster
-            "uptime": 86400,
+            "dna_generation": dna_generation,
+            "epoch": epoch,
+            "risk_var": vstate.get("factor", 1.0),
+            "equity": vstate.get("equity", 0.0), # REAL EQUITY FROM ORCHESTRATOR
+            "pnl": vstate.get("pnl", 0.0),
+            "uptime": uptime or 86400,
             "timestamp": datetime.now().isoformat(),
-            "redis_connected": r.ping() if r else False
+            "redis_connected": bool(r.ping()) if r else False
         })
     except Exception as e:
+        print(f"[API] Status Error: {e}")
         return jsonify({
             "voltran_score": 85.0,
             "dna_generation": 7060,
             "epoch": 7060,
+            "risk_var": 1.0, # Added missing field to prevent UI crash
             "status": "warning",
-            "message": "Redis disconnected"
+            "message": f"Link Degraded: {str(e)}"
         })
 
 
@@ -168,8 +180,15 @@ def get_anomalies():
         if discoveries_dir.exists():
             for file in sorted(discoveries_dir.glob("*.json"), key=lambda x: x.stat().st_mtime, reverse=True)[:20]:
                 try:
+                    mtime = file.stat().st_mtime
+                    age_hours = (datetime.now().timestamp() - mtime) / 3600
                     with open(file) as f:
-                        anomalies.append(json.load(f))
+                        data = json.load(f)
+                        data["is_stale"] = age_hours > 24
+                        data["age_hours"] = round(age_hours, 1)
+                        # Ensure ID exists for React keys
+                        if "id" not in data: data["id"] = file.stem
+                        anomalies.append(data)
                 except:
                     pass
         

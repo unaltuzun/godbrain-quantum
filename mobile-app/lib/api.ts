@@ -9,6 +9,8 @@ export interface SystemStatus {
     dna_generation: number;
     epoch: number;
     risk_var: number;
+    equity: number;
+    pnl: number;
     uptime: number;
     services: {
         name: string;
@@ -76,14 +78,18 @@ export const godbrainApi = {
         } catch (error) {
             console.error('API Error:', error);
             // Return mock data on error
+            // Return obvious error/syncing state - NO MORE FAKE DATA
             return {
-                voltran_score: 85 + Math.random() * 10,
-                dna_generation: 19000 + Math.floor(Math.random() * 1000),
-                epoch: 300 + Math.floor(Math.random() * 20),
-                risk_var: 1.5 + Math.random() * 1.5,
-                uptime: 86400,
-                services: []
-            };
+                voltran_score: 0,
+                dna_generation: 0,
+                epoch: 0,
+                risk_var: 0,
+                equity: 0,
+                pnl: 0,
+                uptime: 0,
+                services: [],
+                status: 'error' // Add this field if possible or just rely on zeros
+            } as any;
         }
     },
 

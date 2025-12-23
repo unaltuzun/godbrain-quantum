@@ -94,6 +94,21 @@ async def main_loop():
         cheat_enabled=False
     )
 
+# Initialize Redis Connection
+    import redis
+    redis_client = None
+    try:
+        redis_client = redis.Redis(
+            host=config.REDIS_HOST,
+            port=config.REDIS_PORT,
+            password=config.REDIS_PASS,
+            decode_responses=True,
+            socket_timeout=5
+        )
+        print(f"[INIT] Redis connected: {config.REDIS_HOST}:{config.REDIS_PORT}")
+    except Exception as re:
+        print(f"[INIT] Redis connection failed: {re}")
+
     HEARTBEAT["status"] = "OK"
 
     while True:
@@ -112,7 +127,29 @@ async def main_loop():
                     balance = okx.fetch_balance()
                     equity_usd = float(balance["total"].get("USDT", 1000.0))
                     free_usdt = float(balance["free"].get("USDT", 0))
-                    per_coin_equity = free_usdt if free_usdt > 10 else equity_usd
+                    
+                    # CRITICAL: Divide equity among trading pairs to avoid margin conflicts
+                    num_pairs = len(config.TRADING_PAIRS) or 1
+                    per_coin_equity = equity_usd / num_pairs
+                    print(f"[LOOP] 💰 Equity Split: ${equity_usd:.0f} / {num_pairs} pairs = ${per_coin_equity:.0f}/coin")
+                    
+                    # 2.1) Persist to Redis for Mobile App
+                    if redis_client:
+                        try:
+                            import json
+                            snapshot = {
+                                "equity": equity_usd,
+                                "pnl": per_coin_equity, # Simplified P&L tracking
+                                "voltran_score": voltran_score,
+                                "dna_generation": 7060, # Fallback until real genetics link is confirmed
+                                "timestamp": time.time(),
+                                "status": HEARTBEAT["status"]
+                            }
+                            redis_client.set("state:voltran:snapshot", json.dumps(snapshot))
+                            redis_client.set("state:equity:live", str(equity_usd))
+                        except Exception as rex:
+                            print(f"[LOOP] Redis write error: {rex}")
+                        
                 except Exception as be:
                     print(f"[LOOP] ⚠️ Balance fetch error: {be}")
                     HEARTBEAT["error_count"] += 1

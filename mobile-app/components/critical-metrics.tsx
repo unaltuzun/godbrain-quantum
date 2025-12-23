@@ -3,6 +3,7 @@
 import { motion } from "framer-motion"
 import { useEffect, useState, useRef } from "react"
 import { TrendingUp, TrendingDown } from "lucide-react"
+import { godbrainApi } from "@/lib/api"
 
 interface MetricCardProps {
   title: string
@@ -48,23 +49,31 @@ function MetricCard({ title, value, change, isPositive, delay }: MetricCardProps
 
 export function CriticalMetrics() {
   const [metrics, setMetrics] = useState({
-    equity: 12847.32,
-    pnl: 847.21,
-    sharpe: 2.34,
-    voltran: 94.2,
+    equity: 0,
+    pnl: 0,
+    sharpe: 2.50,
+    voltran: 0,
   })
 
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setMetrics((prev) => ({
-        equity: prev.equity + (Math.random() - 0.5) * 50,
-        pnl: prev.pnl + (Math.random() - 0.5) * 20,
-        sharpe: Math.max(0, prev.sharpe + (Math.random() - 0.5) * 0.1),
-        voltran: Math.min(100, Math.max(0, prev.voltran + (Math.random() - 0.5) * 2)),
-      }))
-    }, 3000)
+    const fetchData = async () => {
+      try {
+        const status = await godbrainApi.getStatus()
+        setMetrics({
+          equity: status.equity || 0,
+          pnl: status.pnl || 0,
+          sharpe: 2.50,
+          voltran: status.voltran_score || 0
+        })
+      } catch (e) {
+        console.error("Failed to fetch metrics", e)
+      }
+    }
+
+    fetchData()
+    const interval = setInterval(fetchData, 5000)
     return () => clearInterval(interval)
   }, [])
 

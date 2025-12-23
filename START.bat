@@ -59,9 +59,22 @@ start /min "MOBILE_API" python mobile_api.py
 timeout /t 2 /nobreak >nul
 echo       ✅ Started on port 8001
 
-:: 6. SENTINEL (Guardian)
-echo [6/6] 🛡️ Starting SENTINEL Guardian...
+:: 6. MOBILE APP (Port 3000)
+echo [6/7] 📲 Starting Mobile App (Next.js)...
+cd /d C:\Users\zzkid\godbrain-quantum\mobile-app
+start /min "MOBILE_APP" cmd /c "npm run dev"
+cd /d C:\Users\zzkid\godbrain-quantum
+timeout /t 5 /nobreak >nul
+echo       ✅ Started on port 3000
+
+:: 7. SENTINEL (Guardian)
+echo [7/8] 🛡️ Starting SENTINEL Guardian...
 start /min "SENTINEL" python core\sentinel_v3.py
+echo       ✅ Started
+
+:: 8. ANOMALY HUNTER (Intelligence)
+echo [8/8] 🔬 Starting ANOMALY HUNTER...
+start /min "ANOMALY_HUNTER" python anomaly_hunter\hunter.py --monitor
 echo       ✅ Started
 
 echo.
@@ -69,10 +82,9 @@ echo ═════════════════════════
 echo   ✅ GODBRAIN ONLINE - All Systems Go
 echo ══════════════════════════════════════════════════════════════════
 echo.
-echo   📊 Dashboard:   http://localhost:8000
-echo   📱 Mobile API:  http://localhost:8001
-echo   🌐 Public:      https://godbrain.org
-echo   📲 Mobile App:  https://app.godbrain.org
+echo   📊 Dashboard:   https://godbrain.org (Port 8000)
+echo   📱 Mobile API:  https://api.godbrain.org (Port 8001)
+echo   📲 Mobile App:  https://app.godbrain.org (Port 3000)
 echo.
 echo   👁️ SENTINEL is watching. System will auto-heal.
 echo   ⚠️ Do NOT close minimized windows!

@@ -40,8 +40,8 @@ class GodbrainConfig:
     OKX_SECRET = os.getenv("OKX_API_SECRET")
     OKX_PASS = os.getenv("OKX_API_PASSPHRASE")
     
-    # Symbols (Defaults to DOGE and XRP as requested)
-    SYMBOLS_RAW = os.getenv("SYMBOLS", "DOGE/USDT:USDT,XRP/USDT:USDT")
+    # Symbols - PEPE, TIA, PI (User's choice for high volatility)
+    SYMBOLS_RAW = os.getenv("SYMBOLS", "1000PEPE/USDT:USDT,TIA/USDT:USDT,PI/USDT:USDT")
     TRADING_PAIRS = [s.strip() for s in SYMBOLS_RAW.split(",") if s.strip()]
     
     # --- REDIS NAMESPACES (Phase 2) ---
