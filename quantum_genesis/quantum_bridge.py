@@ -109,8 +109,18 @@ class QuantumArena:
         job = sampler.run([transpiled], shots=self.shots)
         result = job.result()
         
-        # Get counts
-        counts = result[0].data.meas.get_counts()
+        # Get counts - try different data attribute names for API compatibility
+        pub_result = result[0]
+        try:
+            # Try meas first (older API)
+            counts = pub_result.data.meas.get_counts()
+        except AttributeError:
+            # New API - iterate over data attributes
+            data_keys = list(pub_result.data.keys())
+            if data_keys:
+                counts = getattr(pub_result.data, data_keys[0]).get_counts()
+            else:
+                counts = {}
         
         execution_time = (datetime.now() - start_time).total_seconds()
         
@@ -164,7 +174,17 @@ class QuantumArena:
         # Process results
         results = []
         for i, genome in enumerate(genomes):
-            counts = result[i].data.meas.get_counts()
+            # Handle different API versions for getting counts
+            pub_result = result[i]
+            try:
+                counts = pub_result.data.meas.get_counts()
+            except AttributeError:
+                data_keys = list(pub_result.data.keys())
+                if data_keys:
+                    counts = getattr(pub_result.data, data_keys[0]).get_counts()
+                else:
+                    counts = {}
+            
             target_prob = counts.get(target_state, 0) / self.shots
             fidelity = self._calculate_fidelity(counts, target_state)
             
