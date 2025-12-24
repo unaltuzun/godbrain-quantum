@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-🦅🐺🦁 VOLTRAN GENETICS - All Labs Runner
-Runs Blackjack, Roulette, and Chaos Labs in parallel threads
+🦅🐺🦁⚛️ VOLTRAN GENETICS - All Labs Runner
+Runs Blackjack, Roulette, Chaos, and Quantum Labs in parallel threads
 """
 
 import os
@@ -47,9 +47,31 @@ def run_chaos():
     except Exception as e:
         print(f"[CHAOS] Error: {e}")
 
+def run_quantum():
+    """Run Quantum Lab with IBM Quantum if available."""
+    use_ibm = os.getenv("USE_IBM_QUANTUM", "false").lower() == "true"
+    
+    if not use_ibm:
+        print("[QUANTUM] Skipping - USE_IBM_QUANTUM not set to true")
+        return
+    
+    try:
+        from genetics.quantum_lab import run_quantum_evolution
+        run_quantum_evolution(
+            redis_host=config.REDIS_HOST,
+            redis_port=config.REDIS_PORT,
+            redis_pass=config.REDIS_PASS,
+            use_ibm=use_ibm,
+            generations=10000
+        )
+    except ImportError as e:
+        print(f"[QUANTUM] Module not available: {e}")
+    except Exception as e:
+        print(f"[QUANTUM] Error: {e}")
+
 if __name__ == "__main__":
     print("=" * 60)
-    print("  🦅🐺🦁 VOLTRAN GENETICS LABS")
+    print("  🦅🐺🦁⚛️ VOLTRAN GENETICS LABS")
     print("  Starting all evolution engines...")
     print("=" * 60)
     
@@ -57,6 +79,7 @@ if __name__ == "__main__":
         threading.Thread(target=run_blackjack, name="Blackjack", daemon=True),
         threading.Thread(target=run_roulette, name="Roulette", daemon=True),
         threading.Thread(target=run_chaos, name="Chaos", daemon=True),
+        threading.Thread(target=run_quantum, name="Quantum", daemon=True),
     ]
     
     for t in threads:
@@ -71,4 +94,5 @@ if __name__ == "__main__":
             time.sleep(60)
     except KeyboardInterrupt:
         print("\n[LAUNCHER] Shutting down...")
+
 
