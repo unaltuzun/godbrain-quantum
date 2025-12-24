@@ -105,7 +105,7 @@ class QuantumArena:
         transpiled = pm.run(circuit)
         
         # Execute via Sampler
-        sampler = Sampler(backend=self.backend)
+        sampler = Sampler(mode=self.backend)
         job = sampler.run([transpiled], shots=self.shots)
         result = job.result()
         
@@ -150,7 +150,7 @@ class QuantumArena:
         transpiled = pm.run(circuits)
         
         # Execute all
-        sampler = Sampler(backend=self.backend)
+        sampler = Sampler(mode=self.backend)
         job = sampler.run(transpiled, shots=self.shots)
         
         print(f"⚡ Job submitted: {job.job_id()}")
