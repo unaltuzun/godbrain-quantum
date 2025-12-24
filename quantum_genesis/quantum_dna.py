@@ -107,14 +107,19 @@ class QuantumDNA:
         qc = QuantumCircuit(self.num_qubits, self.num_qubits)
         
         for gene in self.genes:
-            if gene.nucleotide == Nucleotide.A:  # Hadamard
-                qc.h(gene.target_qubit)
-            elif gene.nucleotide == Nucleotide.T:  # X gate
-                qc.x(gene.target_qubit)
-            elif gene.nucleotide == Nucleotide.G:  # CNOT
-                qc.cx(gene.control_qubit, gene.target_qubit)
-            elif gene.nucleotide == Nucleotide.C:  # RZ
-                qc.rz(gene.parameter, gene.target_qubit)
+            try:
+                if gene.nucleotide == Nucleotide.A:  # Hadamard
+                    qc.h(gene.target_qubit)
+                elif gene.nucleotide == Nucleotide.T:  # X gate
+                    qc.x(gene.target_qubit)
+                elif gene.nucleotide == Nucleotide.G:  # CNOT
+                    if gene.control_qubit is not None and gene.control_qubit != gene.target_qubit:
+                        qc.cx(gene.control_qubit, gene.target_qubit)
+                elif gene.nucleotide == Nucleotide.C:  # RZ
+                    if gene.parameter is not None:
+                        qc.rz(gene.parameter, gene.target_qubit)
+            except Exception:
+                continue  # Skip invalid genes
         
         # Measure all qubits
         qc.measure(range(self.num_qubits), range(self.num_qubits))
@@ -143,10 +148,23 @@ class QuantumDNA:
                 
                 elif mutation_type == 'add' and len(new_genes) < 20:
                     # Add random gene
+                    new_nucleotide = random.choice(list(Nucleotide))
+                    target = random.randint(0, self.num_qubits - 1)
+                    control = None
+                    param = None
+                    
+                    if new_nucleotide == Nucleotide.G and self.num_qubits > 1:
+                        control = random.randint(0, self.num_qubits - 1)
+                        while control == target:
+                            control = random.randint(0, self.num_qubits - 1)
+                    elif new_nucleotide == Nucleotide.C:
+                        param = random.uniform(0, 6.28)
+                    
                     new_gene = Gene(
-                        nucleotide=random.choice(list(Nucleotide)),
-                        target_qubit=random.randint(0, self.num_qubits - 1),
-                        parameter=random.uniform(0, 6.28) if random.random() > 0.5 else None
+                        nucleotide=new_nucleotide,
+                        target_qubit=target,
+                        control_qubit=control,
+                        parameter=param
                     )
                     new_genes.insert(i, new_gene)
                     break
