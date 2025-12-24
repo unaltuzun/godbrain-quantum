@@ -13,9 +13,8 @@ RUN pip install --no-cache-dir redis python-dotenv pandas numpy ccxt pyarrow sci
 # Copy genetics and backtesting modules
 COPY genetics/ ./genetics/
 COPY backtesting/ ./backtesting/
-
-# Create data directories
-RUN mkdir -p data/historical reports/backtest_results
+COPY quantum_genesis/ ./quantum_genesis/
+COPY config_center.py ./
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
